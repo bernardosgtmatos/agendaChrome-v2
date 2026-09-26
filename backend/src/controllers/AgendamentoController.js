@@ -12,6 +12,7 @@ const Novoagendamento = async (req,res) => {
     const t = await sequelize.transaction()
     const {usuario_id, data_retirada, data_devolucao, quantidade, turma, Local, observacao } = req.body
     if(!usuario_id||!data_retirada||!data_devolucao||!quantidade||!turma||!Local){
+        await t.rollback()
         return res.status(400).json({
             message: 'todos os campos são obrigatórios (exceto obs.)'
         })
@@ -19,6 +20,7 @@ const Novoagendamento = async (req,res) => {
     const ValidQnt = typeof(quantidade) === 'number' &&  Number.isInteger(quantidade) && quantidade > 0;
     if(!ValidQnt){
         console.error(`quantidade de chromebooks inválida ${quantidade}`)
+        await t.rollback()
         return res.status(400).json({
             message: 'quantidade de chromebooks deve ser maior que ZERO'
         })
@@ -31,6 +33,7 @@ const Novoagendamento = async (req,res) => {
         const DB_data_ret = await horario_retirada.findOne({where:{ horario_retirada: data_retirada}})
         if (!DB_data_ret){
             console.error('Horario de retirada inexistente')
+            await t.rollback()
             return res.status(404).json({
                 message: 'Horario de retirada inexistente!'
             })
@@ -39,6 +42,7 @@ const Novoagendamento = async (req,res) => {
         const DB_data_devol = await horarios_devolução.findOne({where: {horarios_devolução: data_devolucao}})
         if(!DB_data_devol){
             console.error('Horario de devolução inexistente')
+            await t.rollback()
             return res.status(404).json({
                 message: 'Horario de devolução inexistente'
             })
@@ -46,6 +50,7 @@ const Novoagendamento = async (req,res) => {
         const DB_turma = await Turmas.findOne({where:{serie: turma}})
         if(!DB_turma){
             console.error('Turma requisitada não existe na tabela')
+            await t.rollback()
             return res.status(404).json({
                 message: 'Turma requisitada não existe no sistema'
             })
@@ -53,6 +58,7 @@ const Novoagendamento = async (req,res) => {
         const DB_local = await local.findOne({where: {nome: Local}})
         if(!DB_local){
             console.error('Local requisitado não existe na tabela')
+            await t.rollback()
             return res.status(404).json({
                 message:'Local requisitado não existe no sistema!'
             })
@@ -60,6 +66,7 @@ const Novoagendamento = async (req,res) => {
         const DB_User = await Usuario.findOne({where:{id: usuario_id}})
         if(!DB_User){
             console.error('Usuario não existe')
+            await t.rollback()
             return res.status(404).json({
                 message: 'Este usuario não existe!'
             })
@@ -73,7 +80,10 @@ const Novoagendamento = async (req,res) => {
                 turma: DB_turma.id,
                 local: DB_local.id,
                 observacao: observacao
-            })
+            },
+                {transaction: t,}
+            )
+            await t.commit()
             return res.status(201).json({
                 message: `Agendamento para o realizado com sucesso para o dia:`,
                 agendamento_id: Novoagendamento.id 

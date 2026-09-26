@@ -16,9 +16,11 @@ app.use(express.json())
 //rotas import
 const AdminRoute = require('./src/routes/AdminRoute.js')
 const sequelize = require('./src/config/Database.js')
+const UserRoute = require('./src/routes/UserRoute.js')
 
 //rotas
 app.use('/admin', AdminRoute)
+app.use('/usuario',UserRoute)
 
 const databaseSYNC = async () => {
     try {
