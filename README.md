@@ -4,4 +4,4 @@
 
 dependencias:
 express cors dotenv
-sequelize sqlite
+sequelize sqlite3

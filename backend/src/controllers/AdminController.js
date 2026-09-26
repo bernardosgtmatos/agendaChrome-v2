@@ -1,4 +1,5 @@
 const Admin = require('../model/AdminModel.js')
+const local = require('../model/LocalModel.js')
 const Usuario = require('../model/UserModel')
 
 const createAdminUser = async (req,res) => {
@@ -47,4 +48,33 @@ const createNewUsuario = async (req, res) => {
     }
 }
 
-module.exports = {createAdminUser, createNewUsuario}
+const novaTurma = async (req,res) => {
+    const {serie} = req.body
+    if(!serie){
+        return res.status(400).json(`Todos os campos são obrigatórios`)
+    }
+    try {
+        const novaTurma = await Turmas.create({
+            serie
+        })
+    } catch (error) {
+        return res.status(500).json(`erro ao tentar criar nova turma, ${error}`)
+    }
+}
+
+const novoLocal = async (req,res) => {
+    const {nome} = req.body
+    if(!nome){
+        return res.status(400).json(`todos os campos são obrigatórios`)
+    }
+    try {
+        const novoLocal = await local.create({
+            nome
+        })
+    } catch (error) {
+        return res.status(500).json(`erro ao tentar criar novo local, ${error}`)
+    }
+}
+
+
+module.exports = {createAdminUser, createNewUsuario, novaTurma, novoLocal}

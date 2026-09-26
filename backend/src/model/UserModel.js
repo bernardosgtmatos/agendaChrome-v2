@@ -1,8 +1,8 @@
 const {DataTypes, UUID, UUIDV4, STRING} = require('sequelize')
-const sequelize = require('../config/Databese')
+const sequelize = require('../config/Database')
 const bcrypt = require('bcryptjs')
 
-const Usuario = sequelize.define({
+const Usuario = sequelize.define('Usuario',{
     id:{
         type: DataTypes.UUID,
         defaultValue: UUIDV4,
@@ -25,12 +25,11 @@ const Usuario = sequelize.define({
         type: DataTypes.STRING,
         allowNull: false
     },
+},{
     defaultScope:{
         attributes: {exclude: ['senha']}
     }
 })
-
-
 Usuario.beforeCreate(async (user) => {
     const salt = await bcrypt.genSalt(10)
     user.senha = await bcrypt.hash(user.senha, salt)

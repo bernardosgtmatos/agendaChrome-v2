@@ -1,8 +1,8 @@
 const { DataTypes, UUIDV4 } = require('sequelize')
-const sequelize = require('../config/Databese.js')
+const sequelize = require('../config/Database.js')
 const bcrypt = require('bcryptjs')
 
-const Admin = sequelize.define({
+const Admin = sequelize.define('admin',{
     id:{
         type: DataTypes.UUID,
         defaultValue: UUIDV4,
@@ -25,6 +25,7 @@ const Admin = sequelize.define({
         type: DataTypes.STRING,
         allowNull: false
     },
+},{
     defaultScope:{
         attributes:{ exclude: ['senha']}
     }
