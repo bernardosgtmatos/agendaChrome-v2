@@ -9,8 +9,10 @@ const horario_retirada = sequelize.define('horarios_retirada',{
         primaryKey: true
     },
     horario_retirada:{
-        type: DataTypes.DATEONLY,
-        allowNull: false
+        // cada linha é um horário do dia (07:00, 07:50, 09:00 ...), não uma data
+        type: DataTypes.TIME,
+        allowNull: false,
+        unique: true
     }
 })
 
@@ -22,8 +24,10 @@ const horarios_devolução = sequelize.define('horario_devolucao',{
         primaryKey: true
     },
     horarios_devolução:{
-        type: DataTypes.DATEONLY,
-        allowNull: false
+        // cada linha é um horário do dia (07:00, 07:50, 09:00 ...), não uma data
+        type: DataTypes.TIME,
+        allowNull: false,
+        unique: true
     }
 })
 

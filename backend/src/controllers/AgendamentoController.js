@@ -1,7 +1,7 @@
 
 const { where } = require("sequelize")
-const { horario_retirada, horarios_devolução } = require("../model/HorariosModel")
 const sequelize = require("../config/Database")
+const { horario_retirada, horarios_devolução } = require("../model/HorariosModel")
 const Turmas = require("../model/TurmasModel")
 const local = require("../model/LocalModel")
 const Usuario = require("../model/UserModel")
@@ -30,7 +30,9 @@ const Novoagendamento = async (req,res) => {
     try { //try de validação
         
         //valida horario retirada
-        const DB_data_ret = await horario_retirada.findOne({where:{ horario_retirada: data_retirada}})
+        const DB_data_ret = await horario_retirada.findOne({where:{ id: data_retirada}})
+        console.log((data_retirada));
+        
         if (!DB_data_ret){
             console.error('Horario de retirada inexistente')
             await t.rollback()
@@ -39,7 +41,7 @@ const Novoagendamento = async (req,res) => {
             })
         }
         // valida horario devolução
-        const DB_data_devol = await horarios_devolução.findOne({where: {horarios_devolução: data_devolucao}})
+        const DB_data_devol = await horarios_devolução.findOne({where: {id: data_devolucao}})
         if(!DB_data_devol){
             console.error('Horario de devolução inexistente')
             await t.rollback()
@@ -47,7 +49,7 @@ const Novoagendamento = async (req,res) => {
                 message: 'Horario de devolução inexistente'
             })
         }
-        const DB_turma = await Turmas.findOne({where:{serie: turma}})
+        const DB_turma = await Turmas.findOne({where:{id: turma}})
         if(!DB_turma){
             console.error('Turma requisitada não existe na tabela')
             await t.rollback()
@@ -55,7 +57,7 @@ const Novoagendamento = async (req,res) => {
                 message: 'Turma requisitada não existe no sistema'
             })
         }
-        const DB_local = await local.findOne({where: {nome: Local}})
+        const DB_local = await local.findOne({where: {id: Local}})
         if(!DB_local){
             console.error('Local requisitado não existe na tabela')
             await t.rollback()
@@ -78,12 +80,13 @@ const Novoagendamento = async (req,res) => {
                 data_devolucao: DB_data_devol.id,
                 quantidade: Number(quantidade),
                 turma: DB_turma.id,
-                local: DB_local.id,
+                local_id: DB_local.id,
                 observacao: observacao
             },
                 {transaction: t,}
             )
             await t.commit()
+            await console.log(`Agendamento realizado User_ID : ${DB_User.id}, Agendamento_ID: ${Novoagendamento.id}`)        
             return res.status(201).json({
                 message: `Agendamento para o realizado com sucesso para o dia:`,
                 agendamento_id: Novoagendamento.id 
@@ -104,4 +107,19 @@ const Novoagendamento = async (req,res) => {
     
 }
 
-module.exports = {Novoagendamento}
+
+const listAgendamentos = async (req,res) => {
+    try {
+        const agendamentos = await Agendamento.findAll()
+        console.log('agendamentos listados',agendamentos)
+        return res.status(200).json({
+            lista: agendamentos,
+        })
+    } catch (error) {
+        return res.status(500).json({
+            message:'erro ao tentar listar os agendamentos',
+            error: message.error
+        })
+    }
+}
+module.exports = {Novoagendamento, listAgendamentos}

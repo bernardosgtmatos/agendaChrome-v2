@@ -17,15 +17,17 @@ app.use(express.json())
 const AdminRoute = require('./src/routes/AdminRoute.js')
 const sequelize = require('./src/config/Database.js')
 const UserRoute = require('./src/routes/UserRoute.js')
+const EventRoute = require('./src/routes/EventsRoute.js')
 
 //rotas
 app.use('/admin', AdminRoute)
 app.use('/usuario',UserRoute)
+app.use('/events',EventRoute)
 
 const databaseSYNC = async () => {
     try {
         await sequelize.authenticate()
-        sequelize.sync({alter: true})
+        sequelize.sync({})
     } catch (error) {
         return console.error(`'erro no authenticate do sequelize no arquivo serve.js, ${error}`)
     }

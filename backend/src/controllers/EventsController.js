@@ -1,9 +1,10 @@
 const { where } = require("sequelize")
-const { horario_retirada, horario_retirada, horarios_devolução } = require("../model/HorariosModel")
+const { horario_retirada, horarios_devolução } = require("../model/HorariosModel")
 const Turmas = require("../model/TurmasModel")
 const local = require("../model/LocalModel")
+const { Usuario, Agendamento } = require("../model")
 
-const ListHorarios_ret = async (res) => {
+const ListHorarios_ret = async (req,res) => {
     try {
     const horario_ret = await horario_retirada.findAll()
         return res.status(200).json(horario_ret)
@@ -15,7 +16,7 @@ const ListHorarios_ret = async (res) => {
     }
 }
 
-const ListHorarios_devol = async (res) => {
+const ListHorarios_devol = async (req,res) => {
     try {
         const horario_devol = await horarios_devolução.findAll()
         return res.status(200).json(horario_devol)
@@ -27,10 +28,10 @@ const ListHorarios_devol = async (res) => {
     }
 }
 
-const ListTurmas = async (res) => {
+const ListTurmas = async (req,res) => {
     try {
-        const Turmas = await Turmas.findAll()
-        return res.status(200).json(Turmas)
+        const listTurmas = await Turmas.findAll()
+        return res.status(200).json(listTurmas)
     } catch (error) {
         return res.status(500).json({
             message: 'erro ao tentar listar as turmas',
@@ -39,7 +40,7 @@ const ListTurmas = async (res) => {
     }
 }
 
-const listLocal = async (res) => {
+const listLocal = async (req,res) => {
     try {
         const Local = await local.findAll()
         return res.status(200).json(Local)
@@ -50,3 +51,28 @@ const listLocal = async (res) => {
         })
     }
 }
+const listUsers = async (req,res) => {
+    try {
+        const Usuario = await Usuario.findAll()
+        return res.status(200).json(Usuario)
+    } catch (error) {
+        return res.status(500).json({
+            message: 'erro ao tentar listar usuarios',
+            error: error.message
+        })
+    }
+}
+
+const listAgend = async (req,res) => {
+    try {
+        const list = await Agendamento.findAll()
+        return res.status(200).json(list)        
+    } catch (error) {
+        return res.status(500).json({
+            message: 'erro ao tentar listar agendamentos',
+            error: error.message
+        })
+    }
+    }
+
+module.exports = {ListHorarios_ret,ListHorarios_devol,ListTurmas,listLocal,listUsers,listAgend}
