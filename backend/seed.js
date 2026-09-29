@@ -34,6 +34,9 @@ const HORARIOS = [
     {nome: '6º Horário', inicio: '12:20', fim: '13:10'},
     {nome: '7º Horário', inicio: '13:10', fim: '14:00'},
 ]
+const HORARIOS_DEVOL =  [
+
+]
 
 // cria o que ainda não existe na tabela, cada item é conferido pela chave natural do campo
 const criarSeNaoExistir = async (Model, campo, valores, rotulo, constante) => {
@@ -87,7 +90,7 @@ const seed = async () => {
         await criarSeNaoExistir(horario_retirada, 'horario_retirada', HORARIOS.map((horario) => horario.inicio), 'horários de retirada', 'HORARIOS')
 
         console.log('horários de devolução:')
-        await criarSeNaoExistir(horarios_devolução, 'horarios_devolução', HORARIOS.map((horario) => horario.inicio), 'horários de devolução', 'HORARIOS')
+        await criarSeNaoExistir(horarios_devolução, 'horarios_devolução', HORARIOS.map((horario) => horario.fim), 'horários de devolução', 'HORARIOS')
 
         console.log('turmas:')
         await criarSeNaoExistir(Turmas, 'serie', TURMAS, 'turmas', 'TURMAS')
