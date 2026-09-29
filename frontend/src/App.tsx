@@ -1,5 +1,5 @@
 import { Route, Routes } from 'react-router-dom'
-import AgendamentoForm from './pages/AgendamentoForm.tsx'
+import AgendamentoForm from './pages/Agendamento/AgendamentoForm.tsx'
 import './App.css'
 
 function App() {
