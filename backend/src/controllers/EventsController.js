@@ -53,8 +53,8 @@ const listLocal = async (req,res) => {
 }
 const listUsers = async (req,res) => {
     try {
-        const Usuario = await Usuario.findAll()
-        return res.status(200).json(Usuario)
+        const listUsuarios = await Usuario.findAll()
+        return res.status(200).json(listUsuarios)
     } catch (error) {
         return res.status(500).json({
             message: 'erro ao tentar listar usuarios',

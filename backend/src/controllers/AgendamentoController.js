@@ -118,7 +118,7 @@ const listAgendamentos = async (req,res) => {
     } catch (error) {
         return res.status(500).json({
             message:'erro ao tentar listar os agendamentos',
-            error: message.error
+            error: error.message
         })
     }
 }
