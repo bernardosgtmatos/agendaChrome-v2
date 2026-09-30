@@ -1,7 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import { API_BASE, getJson } from '../../lib/api.ts'
 import './AgendamentoForm.css'
-
-const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:5000'
 
 type Opcao = { id: string; rotulo: string }
 
@@ -60,14 +59,6 @@ function dadosIniciais(): DadosFormulario {
   }
 }
 
-async function buscar<T>(caminho: string): Promise<T> {
-  const resposta = await fetch(`${API_BASE}/events/${caminho}`)
-  if (!resposta.ok) {
-    throw new Error(`a API respondeu ${resposta.status} em ${caminho}`)
-  }
-  return (await resposta.json()) as T
-}
-
 function rotuloDa(opcoes: Opcao[], id: string): string | undefined {
   return opcoes.find((opcao) => opcao.id === id)?.rotulo
 }
@@ -119,11 +110,11 @@ function AgendamentoForm() {
     async function carregar() {
       try {
         const [retirada, devolucao, turmas, locais, usuarios] = await Promise.all([
-          buscar<HorarioRetirada[]>('listHorario_ret'),
-          buscar<HorarioDevolucao[]>('listHorario_devol'),
-          buscar<Turma[]>('listTurmas'),
-          buscar<Local[]>('listLocal'),
-          buscar<Usuario[]>('listUsers'),
+          getJson<HorarioRetirada[]>('events/listHorario_ret'),
+          getJson<HorarioDevolucao[]>('events/listHorario_devol'),
+          getJson<Turma[]>('events/listTurmas'),
+          getJson<Local[]>('events/listLocal'),
+          getJson<Usuario[]>('events/listUsers'),
         ])
         if (cancelado) return
         setOpcoes({
@@ -350,7 +341,6 @@ function AgendamentoForm() {
             id="observacao"
             rows={3}
             maxLength={255}
-            placeholder="Ex.: retirar na recepção"
             value={dados.observacao}
             disabled={enviando}
             onChange={(evento) => atualizar('observacao', evento.target.value)}

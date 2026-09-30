@@ -1,0 +1,94 @@
+.agendamento-lista {
+  margin: 40px auto 80px;
+  padding: 32px;
+  max-width: 1100px;
+  text-align: left;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--code-bg);
+  box-shadow: var(--shadow);
+}
+
+.agendamento-lista h1 {
+  font-size: 32px;
+  letter-spacing: -0.96px;
+  margin: 0 0 8px;
+
+  @media (max-width: 1024px) {
+    font-size: 26px;
+  }
+}
+
+.agendamento-lista__descricao {
+  font-size: 16px;
+  margin: 0 0 24px;
+}
+
+.agendamento-lista__aviso {
+  margin: 40px auto;
+  padding: 16px 20px;
+  max-width: 1100px;
+  text-align: left;
+  font-size: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--code-bg);
+}
+
+.agendamento-lista__aviso--erro {
+  border-color: rgba(220, 38, 38, 0.4);
+  background: rgba(220, 38, 38, 0.12);
+  color: var(--text-h);
+}
+
+.agendamento-lista__vazio {
+  padding: 32px 20px;
+  margin: 0;
+  text-align: center;
+  font-size: 16px;
+  color: var(--text-h);
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+}
+
+.agendamento-lista__rolagem {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.agendamento-lista__tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+
+.agendamento-lista__tabela th,
+.agendamento-lista__tabela td {
+  padding: 12px 14px;
+  text-align: left;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--border);
+}
+
+.agendamento-lista__tabela th {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text-h);
+  background: var(--bg);
+}
+
+.agendamento-lista__tabela tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.agendamento-lista__tabela tbody tr:hover td {
+  background: var(--accent-bg);
+}
+
+.agendamento-lista__protocolo {
+  font-family: var(--mono);
+  font-size: 13px;
+}

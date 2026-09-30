@@ -1,0 +1,191 @@
+import { useEffect, useState } from 'react'
+import { getJson } from '../../lib/api.ts'
+import './AgendamentoListagem.css'
+
+const VAZIO = '—'
+
+type Agendamento = {
+  id: string
+  usuario_id: string
+  date: string
+  data_retirada: string
+  data_devolucao: string
+  quantidade: number
+  turma: string
+  local_id: string
+  observacao: string | null
+}
+
+type HorarioRetirada = { id: string; horario_retirada: string }
+type HorarioDevolucao = { id: string; 'horarios_devolução': string }
+type Turma = { id: string; serie: string }
+type Local = { id: string; nome: string | null }
+type Usuario = { id: string; nome: string; email: string }
+
+type Referencias = {
+  retirada: HorarioRetirada[]
+  devolucao: HorarioDevolucao[]
+  turmas: Turma[]
+  locais: Local[]
+  usuarios: Usuario[]
+}
+
+const REFERENCIAS_VAZIAS: Referencias = {
+  retirada: [],
+  devolucao: [],
+  turmas: [],
+  locais: [],
+  usuarios: [],
+}
+
+function indexar<T extends { id: string }>(
+  itens: T[],
+  extrair: (item: T) => string | null | undefined,
+): Map<string, string> {
+  const mapa = new Map<string, string>()
+  for (const item of itens) {
+    const valor = extrair(item)
+    if (valor) mapa.set(item.id, valor)
+  }
+  return mapa
+}
+
+function formatarDataHora(valor: string): string {
+  const data = new Date(valor)
+  if (Number.isNaN(data.getTime())) return VAZIO
+  const dia = data.toLocaleDateString('pt-BR')
+  const hora = data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+  return `${dia} ${hora}`
+}
+
+function AgendamentoListagem() {
+  const [agendamentos, setAgendamentos] = useState<Agendamento[]>([])
+  const [referencias, setReferencias] = useState<Referencias>(REFERENCIAS_VAZIAS)
+  const [carregando, setCarregando] = useState(true)
+  const [erroCarregamento, setErroCarregamento] = useState<string | null>(null)
+
+  useEffect(() => {
+    let cancelado = false
+
+    async function carregar() {
+      try {
+        const [listaAgendamentos, retirada, devolucao, turmas, locais, usuarios] = await Promise.all([
+          getJson<Agendamento[]>('events/listAgend'),
+          getJson<HorarioRetirada[]>('events/listHorario_ret'),
+          getJson<HorarioDevolucao[]>('events/listHorario_devol'),
+          getJson<Turma[]>('events/listTurmas'),
+          getJson<Local[]>('events/listLocal'),
+          getJson<Usuario[]>('events/listUsers'),
+        ])
+        if (cancelado) return
+        setAgendamentos(listaAgendamentos)
+        setReferencias({ retirada, devolucao, turmas, locais, usuarios })
+      } catch (falha) {
+        if (cancelado) return
+        setErroCarregamento(
+          falha instanceof Error
+            ? `não foi possível carregar os agendamentos: ${falha.message}`
+            : 'não foi possível carregar os agendamentos',
+        )
+      } finally {
+        if (!cancelado) setCarregando(false)
+      }
+    }
+
+    carregar()
+    return () => {
+      cancelado = true
+    }
+  }, [])
+
+  const rotulos = {
+    usuarios: indexar(referencias.usuarios, (usuario) => `${usuario.nome} (${usuario.email})`),
+    turmas: indexar(referencias.turmas, (turma) => turma.serie),
+    locais: indexar(referencias.locais, (item) => item.nome),
+    retirada: indexar(referencias.retirada, (horario) => horario.horario_retirada),
+    devolucao: indexar(referencias.devolucao, (horario) => horario['horarios_devolução']),
+  }
+
+  const rotuloDe = (mapa: Map<string, string>, id: string) => mapa.get(id) ?? VAZIO
+
+  const linhas = agendamentos
+    .slice()
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .map((agendamento) => {
+      const observacao = agendamento.observacao?.trim()
+      return {
+        id: agendamento.id,
+        protocolo: agendamento.id.slice(0, 8),
+        data: formatarDataHora(agendamento.date),
+        retirada: rotuloDe(rotulos.retirada, agendamento.data_retirada),
+        devolucao: rotuloDe(rotulos.devolucao, agendamento.data_devolucao),
+        quantidade: agendamento.quantidade,
+        turma: rotuloDe(rotulos.turmas, agendamento.turma),
+        local: rotuloDe(rotulos.locais, agendamento.local_id),
+        solicitante: rotuloDe(rotulos.usuarios, agendamento.usuario_id),
+        observacao: observacao ? observacao : VAZIO,
+      }
+    })
+
+  if (carregando) {
+    return <p className="agendamento-lista__aviso">Carregando agendamentos...</p>
+  }
+
+  if (erroCarregamento) {
+    return <p className="agendamento-lista__aviso agendamento-lista__aviso--erro">{erroCarregamento}</p>
+  }
+
+  return (
+    <section className="agendamento-lista">
+      <h1>Agendamentos</h1>
+      <p className="agendamento-lista__descricao">
+        {linhas.length === 1
+          ? '1 agendamento registrado.'
+          : `${linhas.length} agendamentos registrados.`}
+      </p>
+
+      {linhas.length === 0 ? (
+        <p className="agendamento-lista__vazio">
+          Nenhum agendamento registrado ainda. Crie o primeiro em <strong>Novo agendamento</strong>.
+        </p>
+      ) : (
+        <div className="agendamento-lista__rolagem">
+          <table className="agendamento-lista__tabela">
+            <thead>
+              <tr>
+                <th scope="col">Protocolo</th>
+                <th scope="col">Data</th>
+                <th scope="col">Retirada</th>
+                <th scope="col">Devolução</th>
+                <th scope="col">Quantidade</th>
+                <th scope="col">Turma</th>
+                <th scope="col">Local</th>
+                <th scope="col">Solicitante</th>
+                <th scope="col">Observação</th>
+              </tr>
+            </thead>
+            <tbody>
+              {linhas.map((linha) => (
+                <tr key={linha.id}>
+                  <td className="agendamento-lista__protocolo" title={linha.id}>
+                    {linha.protocolo}
+                  </td>
+                  <td>{linha.data}</td>
+                  <td>{linha.retirada}</td>
+                  <td>{linha.devolucao}</td>
+                  <td>{linha.quantidade}</td>
+                  <td>{linha.turma}</td>
+                  <td>{linha.local}</td>
+                  <td>{linha.solicitante}</td>
+                  <td>{linha.observacao}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
+  )
+}
+
+export default AgendamentoListagem
