@@ -1,7 +1,7 @@
 import { Outlet, Route, Routes } from 'react-router-dom'
 import NavBar from './components/NavBar.tsx'
-import AgendamentoForm from './pages/Agendamento/AgendamentoForm.tsx'
-import AgendamentoListagem from './pages/Agendamento/AgendamentoListagem.tsx'
+import AgendamentoForm from './pages/agendar/AgendamentoForm.tsx'
+import AgendamentoListagem from './pages/agendamentos/AgendamentoListagem.tsx'
 import './App.css'
 
 function Layout() {
