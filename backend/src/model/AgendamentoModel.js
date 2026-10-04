@@ -22,7 +22,7 @@ const Agendamento = sequelize.define('Agendamento',{
         }
     },
     date:{
-        type: DataTypes.DATE,
+        type: DataTypes.DATEONLY,
         defaultValue: DataTypes.NOW,
         allowNull: false
     },

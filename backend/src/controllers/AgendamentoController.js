@@ -8,9 +8,12 @@ const Usuario = require("../model/UserModel")
 const Agendamento = require("../model/AgendamentoModel")
 
 
+
 const Novoagendamento = async (req,res) => {
     const t = await sequelize.transaction()
-    const {usuario_id, data_retirada, data_devolucao, quantidade, turma, Local, observacao } = req.body
+    const usuario_id = req.user.id
+    console.log(usuario_id)
+    const {data_retirada, data_devolucao, quantidade, turma, Local, observacao } = req.body
     if(!usuario_id||!data_retirada||!data_devolucao||!quantidade||!turma||!Local){
         await t.rollback()
         return res.status(400).json({
@@ -92,6 +95,9 @@ const Novoagendamento = async (req,res) => {
                 agendamento_id: Novoagendamento.id 
             })
         } catch (error) {
+            if(!t.finished){
+                await t.rollback()
+            }
             console.error(`erro dentro do try Agendamento.create, ${error}`)
             return res.status(500).json({
                 message: 'Erro ao tentar realizar agendamento!',
@@ -122,4 +128,63 @@ const listAgendamentos = async (req,res) => {
         })
     }
 }
-module.exports = {Novoagendamento, listAgendamentos}
+
+const cancelarAgendamento = async (req,res) => {
+    const usuario_id = req.user.id
+    const {agendamento_id} = req.body // esse user_id deve vir do cookie-peaser e ser comparado
+    const t = await sequelize.transaction()
+    if(!agendamento_id){
+        console.log('agendamento_id inexistente')
+        await t.rollback()
+        return res.status(404).json({
+            message: 'O agendamento requisistado para o cancelamento não existe mais!'
+        })
+    }
+    if(!usuario_id){
+        console.log('Usuario que requisitou o cancelamento não tem ID')
+        await t.rollback()
+        return res.status(404).json({
+            message: 'Seu id não esta cadastrado na plataforma!'
+        })
+    }
+    try {
+        const Agend_id = await Agendamento.findOne({where:{id:agendamento_id, usuario_id: usuario_id}, transaction: t}) // talvez se der algum erro com relacionamento entre agendamento e user : "Você busca todos os agendamentos do usuário e tenta comparar com um único ID. O correto é buscar diretamente o agendamento pelo id e pelo usuario_id, ou então buscar pelo id e comparar o usuario_id da linha."
+        if(!Agend_id ){ 
+            console.log('ID do agendamento nao existe na tabela.')
+            await t.rollback()
+            return res.status(404).json({
+                message: 'Este agendamento nã́o existe, ou ja foi cancelado.'
+            })
+        }
+        if(Agend_id.usuario_id !== usuario_id){
+            await t.rollback()
+            console.log('usuario esta tentando cancelar agendamento que não lhe pertence')
+            await t.rollback()
+            return res.status(403).json({
+                message: 'Este agendamento não pertence a você, Porfavor selecione apenas os agendamentos pertencentes a você.'
+            })
+        }
+        if(Agend_id.status == 'cancelado'){
+            return res.status(404).json({
+                message: 'Este agendamento ja foi cancelado.'
+            })
+        }
+        
+        const cancelar = await Agend_id.update({status: 'cancelado'},{transaction: t})
+        console.log(`agendamento cancelado com sucesso`)
+        await t.commit()
+        return res.status(200).json({
+            message: 'Agendamento cancelado com sucesso!'
+        })
+    
+    } catch (error) {
+        console.error(error)
+        if (!t.finished){
+            await t.rollback()
+        }
+        return res.status(500).json({
+            message: 'Erro interno do servidor tente mais tarde.'
+        })
+    }
+}
+module.exports = {Novoagendamento, listAgendamentos, cancelarAgendamento}
