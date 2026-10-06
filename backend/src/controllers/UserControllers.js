@@ -37,4 +37,35 @@ const login = async (req,res) => {
         })
     }
 }
-module.exports = {login}
+const me = async (req, res) => {
+    try {
+        const user = await Usuario.findByPk(req.user.id)
+        if (!user) {
+            return res.status(401).json({
+                message: 'Sessão inválida.'
+            })
+        }
+        return res.status(200).json({
+            id: user.id,
+            nome: user.nome,
+            email: user.email,
+        })
+    } catch (error) {
+        console.error(error)
+        return res.status(401).json({
+            message: 'Sessão inválida.'
+        })
+    }
+}
+
+const logout = async (req, res) => {
+    res.clearCookie('token', {
+        httpOnly: true,
+        secure: false,
+        sameSite: 'strict',
+    })
+    return res.status(200).json({
+        message: 'logout realizado com sucesso!'
+    })
+}
+module.exports = {login, me, logout}
