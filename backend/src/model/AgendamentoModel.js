@@ -71,7 +71,7 @@ const Agendamento = sequelize.define('Agendamento',{
         allowNull: true
     },
     status:{
-        type: DataTypes.ENUM('Pendente','Em progresso','Finalizado'),
+        type: DataTypes.ENUM('Pendente','Em progresso','Finalizado','Cancelado'),
         defaultValue: 'Pendente',
         allowNull: false
     }

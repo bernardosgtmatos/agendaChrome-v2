@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { API_BASE, getJson } from '../../lib/api.ts'
+import { getJson, postJson } from '../../lib/api.ts'
 import './AgendamentoForm.css'
 
 type Opcao = { id: string; rotulo: string }
@@ -182,10 +182,9 @@ function AgendamentoForm() {
     setEnviando(true)
 
     try {
-      const resposta = await fetch(`${API_BASE}/usuario/NovoAgendamento`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const corpo = await postJson<{ message?: string; agendamento_id?: string }>(
+        'usuario/NovoAgendamento',
+        {
           usuario_id: dados.usuario_id,
           date: dados.date,
           data_retirada: dados.data_retirada,
@@ -194,17 +193,8 @@ function AgendamentoForm() {
           Local: dados.Local,
           quantidade: Number(dados.quantidade),
           observacao: dados.observacao.trim(),
-        }),
-      })
-
-      const corpo: { message?: string; agendamento_id?: string } | null = await resposta
-        .json()
-        .catch(() => null)
-
-      if (!resposta.ok) {
-        setErro(corpo?.message ?? `a API respondeu ${resposta.status} ao tentar o agendamento.`)
-        return
-      }
+        },
+      )
 
       setSucesso({
         texto: corpo?.message ?? 'Agendamento realizado com sucesso.',

@@ -170,7 +170,7 @@ const cancelarAgendamento = async (req,res) => {
             })
         }
         
-        const cancelar = await Agend_id.update({status: 'cancelado'},{transaction: t})
+        const cancelar = await Agend_id.update({status: 'Cancelado'},{transaction: t})
         console.log(`agendamento cancelado com sucesso`)
         await t.commit()
         return res.status(200).json({

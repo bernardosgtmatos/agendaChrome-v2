@@ -16,9 +16,25 @@ export async function getJson<T>(caminho: string): Promise<T> {
     credentials: 'include',
   })
   if (!resposta.ok) {
-    throw new Error(`a API respondeu ${resposta.status} em ${caminho}`)
+    throw new Error(await lerMensagemErro(resposta))
   }
   return (await resposta.json()) as T
+}
+
+export async function postJson<T>(caminho: string, corpo: unknown): Promise<T> {
+  const resposta = await fetch(`${API_BASE}/${caminho}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(corpo),
+  })
+  const dados = (await resposta.json().catch(() => null)) as T | null
+  if (!resposta.ok) {
+    throw new Error(
+      (dados as { message?: string } | null)?.message ?? `a API respondeu ${resposta.status}`,
+    )
+  }
+  return dados as T
 }
 
 export type UsuarioSessao = {
