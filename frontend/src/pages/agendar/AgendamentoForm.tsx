@@ -9,17 +9,22 @@ type Opcoes = {
   devolucao: Opcao[]
   turmas: Opcao[]
   locais: Opcao[]
-  usuarios: Opcao[]
 }
 
 type HorarioRetirada = { id: string; horario_retirada: string }
 type HorarioDevolucao = { id: string; 'horarios_devolução': string }
 type Turma = { id: string; serie: string }
 type Local = { id: string; nome: string }
-type Usuario = { id: string; nome: string; email: string }
+
+type Disponibilidade = {
+  total: number
+  ocupado: number
+  disponivel: number
+  retirada: string
+  devolucao: string
+}
 
 type DadosFormulario = {
-  usuario_id: string
   date: string
   data_retirada: string
   data_devolucao: string
@@ -36,7 +41,6 @@ const OPCOES_VAZIAS: Opcoes = {
   devolucao: [],
   turmas: [],
   locais: [],
-  usuarios: [],
 }
 
 function hoje(): string {
@@ -48,7 +52,6 @@ function hoje(): string {
 
 function dadosIniciais(): DadosFormulario {
   return {
-    usuario_id: '',
     date: hoje(),
     data_retirada: '',
     data_devolucao: '',
@@ -103,18 +106,18 @@ function AgendamentoForm() {
   const [erro, setErro] = useState<string | null>(null)
   const [sucesso, setSucesso] = useState<Sucesso | null>(null)
   const [enviando, setEnviando] = useState(false)
+  const [disponibilidade, setDisponibilidade] = useState<Disponibilidade | null>(null)
 
   useEffect(() => {
     let cancelado = false
 
     async function carregar() {
       try {
-        const [retirada, devolucao, turmas, locais, usuarios] = await Promise.all([
+        const [retirada, devolucao, turmas, locais] = await Promise.all([
           getJson<HorarioRetirada[]>('events/listHorario_ret'),
           getJson<HorarioDevolucao[]>('events/listHorario_devol'),
           getJson<Turma[]>('events/listTurmas'),
           getJson<Local[]>('events/listLocal'),
-          getJson<Usuario[]>('events/listUsers'),
         ])
         if (cancelado) return
         setOpcoes({
@@ -122,7 +125,6 @@ function AgendamentoForm() {
           devolucao: devolucao.map((horario) => ({ id: horario.id, rotulo: horario['horarios_devolução'] })),
           turmas: turmas.map((turma) => ({ id: turma.id, rotulo: turma.serie })),
           locais: locais.map((item) => ({ id: item.id, rotulo: item.nome })),
-          usuarios: usuarios.map((usuario) => ({ id: usuario.id, rotulo: `${usuario.nome} (${usuario.email})` })),
         })
       } catch (falha) {
         if (cancelado) return
@@ -146,8 +148,27 @@ function AgendamentoForm() {
     setDados((atual) => ({ ...atual, [campo]: valor }))
   }
 
+  useEffect(() => {
+    if (!dados.date || !dados.data_retirada || !dados.data_devolucao) {
+      setDisponibilidade(null)
+      return
+    }
+    let cancelado = false
+    getJson<Disponibilidade>(
+      `events/disponibilidade?date=${dados.date}&data_retirada=${dados.data_retirada}&data_devolucao=${dados.data_devolucao}`,
+    )
+      .then((info) => {
+        if (!cancelado) setDisponibilidade(info)
+      })
+      .catch(() => {
+        if (!cancelado) setDisponibilidade(null)
+      })
+    return () => {
+      cancelado = true
+    }
+  }, [dados.date, dados.data_retirada, dados.data_devolucao])
+
   function validar(): string | null {
-    if (!dados.usuario_id) return 'Selecione o usuário que vai retirar os chromebooks.'
     if (!dados.date) return 'Informe a data do agendamento.'
     if (!dados.data_retirada) return 'Selecione o horário de retirada.'
     if (!dados.data_devolucao) return 'Selecione o horário de devolução.'
@@ -185,7 +206,6 @@ function AgendamentoForm() {
       const corpo = await postJson<{ message?: string; agendamento_id?: string }>(
         'usuario/NovoAgendamento',
         {
-          usuario_id: dados.usuario_id,
           date: dados.date,
           data_retirada: dados.data_retirada,
           data_devolucao: dados.data_devolucao,
@@ -201,6 +221,7 @@ function AgendamentoForm() {
         agendamentoId: corpo?.agendamento_id,
       })
       setDados(dadosIniciais())
+      setDisponibilidade(null)
     } catch (falha) {
       setErro(
         falha instanceof Error
@@ -241,16 +262,6 @@ function AgendamentoForm() {
       )}
 
       <form onSubmit={enviar} noValidate>
-        <Selecao
-          id="usuario_id"
-          rotulo="Usuário responsável"
-          valor={dados.usuario_id}
-          opcoes={opcoes.usuarios}
-          vazio="Selecione o usuário"
-          desabilitado={enviando}
-          aoMudar={(valor) => atualizar('usuario_id', valor)}
-        />
-
         <div className="linha">
           <div className="campo">
             <label htmlFor="date">Data do agendamento</label>
@@ -271,6 +282,7 @@ function AgendamentoForm() {
               type="number"
               inputMode="numeric"
               min={1}
+              max={disponibilidade?.disponivel ?? undefined}
               step={1}
               placeholder="Ex.: 15"
               value={dados.quantidade}
@@ -278,6 +290,12 @@ function AgendamentoForm() {
               onChange={(evento) => atualizar('quantidade', evento.target.value)}
               required
             />
+            {disponibilidade && (
+              <p className="agendamento-form__aviso">
+                {disponibilidade.disponivel}/{disponibilidade.total} disponíveis neste intervalo
+                ({disponibilidade.retirada}–{disponibilidade.devolucao}, ocupado {disponibilidade.ocupado})
+              </p>
+            )}
           </div>
         </div>
 

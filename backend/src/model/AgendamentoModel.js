@@ -47,6 +47,7 @@ const Agendamento = sequelize.define('Agendamento',{
     quantidade:{
         type: DataTypes.INTEGER,
         allowNull: false,
+        validate:{ min: 1 },
     },
     turma:{
         // vem da tabela turma
@@ -75,6 +76,8 @@ const Agendamento = sequelize.define('Agendamento',{
         defaultValue: 'Pendente',
         allowNull: false
     }
+},{
+    indexes:[{fields:['date']},{fields:['status']}]
 })
 
 // ta invertido as associações, todos os belongs vão para tabela agendamento

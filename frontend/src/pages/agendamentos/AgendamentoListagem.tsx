@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { getJson } from '../../lib/api.ts'
+import { getJson, postJson } from '../../lib/api.ts'
 import './AgendamentoListagem.css'
 
 const VAZIO = '—'
@@ -14,6 +14,7 @@ type Agendamento = {
   turma: string
   local_id: string
   observacao: string | null
+  status: string
 }
 
 type HorarioRetirada = { id: string; horario_retirada: string }
@@ -50,12 +51,13 @@ function indexar<T extends { id: string }>(
   return mapa
 }
 
-function formatarDataHora(valor: string): string {
+function formatarData(valor: string): string {
+  // date é DATEONLY (YYYY-MM-DD). Evita new Date() que desloca por timezone.
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(valor)
+  if (m) return `${m[3]}/${m[2]}/${m[1]}`
   const data = new Date(valor)
   if (Number.isNaN(data.getTime())) return VAZIO
-  const dia = data.toLocaleDateString('pt-BR')
-  const hora = data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-  return `${dia} ${hora}`
+  return data.toLocaleDateString('pt-BR')
 }
 
 function AgendamentoListagem() {
@@ -63,33 +65,37 @@ function AgendamentoListagem() {
   const [referencias, setReferencias] = useState<Referencias>(REFERENCIAS_VAZIAS)
   const [carregando, setCarregando] = useState(true)
   const [erroCarregamento, setErroCarregamento] = useState<string | null>(null)
+  const [cancelandoId, setCancelandoId] = useState<string | null>(null)
+
+  async function recarregar(setCarregandoAoFim = true) {
+    try {
+      const [listaAgendamentos, retirada, devolucao, turmas, locais, usuarios] = await Promise.all([
+        getJson<Agendamento[]>('events/listAgend'),
+        getJson<HorarioRetirada[]>('events/listHorario_ret'),
+        getJson<HorarioDevolucao[]>('events/listHorario_devol'),
+        getJson<Turma[]>('events/listTurmas'),
+        getJson<Local[]>('events/listLocal'),
+        getJson<Usuario[]>('events/listUsers'),
+      ])
+      setAgendamentos(listaAgendamentos)
+      setReferencias({ retirada, devolucao, turmas, locais, usuarios })
+    } catch (falha) {
+      setErroCarregamento(
+        falha instanceof Error
+          ? `não foi possível carregar os agendamentos: ${falha.message}`
+          : 'não foi possível carregar os agendamentos',
+      )
+    } finally {
+      if (setCarregandoAoFim) setCarregando(false)
+    }
+  }
 
   useEffect(() => {
     let cancelado = false
 
     async function carregar() {
-      try {
-        const [listaAgendamentos, retirada, devolucao, turmas, locais, usuarios] = await Promise.all([
-          getJson<Agendamento[]>('events/listAgend'),
-          getJson<HorarioRetirada[]>('events/listHorario_ret'),
-          getJson<HorarioDevolucao[]>('events/listHorario_devol'),
-          getJson<Turma[]>('events/listTurmas'),
-          getJson<Local[]>('events/listLocal'),
-          getJson<Usuario[]>('events/listUsers'),
-        ])
-        if (cancelado) return
-        setAgendamentos(listaAgendamentos)
-        setReferencias({ retirada, devolucao, turmas, locais, usuarios })
-      } catch (falha) {
-        if (cancelado) return
-        setErroCarregamento(
-          falha instanceof Error
-            ? `não foi possível carregar os agendamentos: ${falha.message}`
-            : 'não foi possível carregar os agendamentos',
-        )
-      } finally {
-        if (!cancelado) setCarregando(false)
-      }
+      if (cancelado) return
+      await recarregar(true)
     }
 
     carregar()
@@ -97,6 +103,22 @@ function AgendamentoListagem() {
       cancelado = true
     }
   }, [])
+
+  async function cancelar(id: string) {
+    if (!window.confirm('Cancelar este agendamento e liberar o estoque do intervalo?')) return
+    setCancelandoId(id)
+    setErroCarregamento(null)
+    try {
+      await postJson('usuario/cancelarAgendamento', { agendamento_id: id })
+      await recarregar(false)
+    } catch (falha) {
+      setErroCarregamento(
+        falha instanceof Error ? falha.message : 'não foi possível cancelar o agendamento',
+      )
+    } finally {
+      setCancelandoId(null)
+    }
+  }
 
   const rotulos = {
     usuarios: indexar(referencias.usuarios, (usuario) => `${usuario.nome} (${usuario.email})`),
@@ -116,7 +138,7 @@ function AgendamentoListagem() {
       return {
         id: agendamento.id,
         protocolo: agendamento.id.slice(0, 8),
-        data: formatarDataHora(agendamento.date),
+        data: formatarData(agendamento.date),
         retirada: rotuloDe(rotulos.retirada, agendamento.data_retirada),
         devolucao: rotuloDe(rotulos.devolucao, agendamento.data_devolucao),
         quantidade: agendamento.quantidade,
@@ -124,6 +146,8 @@ function AgendamentoListagem() {
         local: rotuloDe(rotulos.locais, agendamento.local_id),
         solicitante: rotuloDe(rotulos.usuarios, agendamento.usuario_id),
         observacao: observacao ? observacao : VAZIO,
+        status: agendamento.status ?? VAZIO,
+        cancelado: agendamento.status === 'Cancelado',
       }
     })
 
@@ -162,6 +186,8 @@ function AgendamentoListagem() {
                 <th scope="col">Local</th>
                 <th scope="col">Solicitante</th>
                 <th scope="col">Observação</th>
+                <th scope="col">Status</th>
+                <th scope="col">Ações</th>
               </tr>
             </thead>
             <tbody>
@@ -178,6 +204,18 @@ function AgendamentoListagem() {
                   <td>{linha.local}</td>
                   <td>{linha.solicitante}</td>
                   <td>{linha.observacao}</td>
+                  <td>{linha.status}</td>
+                  <td>
+                    {!linha.cancelado && (
+                      <button
+                        type="button"
+                        disabled={cancelandoId === linha.id}
+                        onClick={() => cancelar(linha.id)}
+                      >
+                        {cancelandoId === linha.id ? 'Cancelando…' : 'Cancelar'}
+                      </button>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>

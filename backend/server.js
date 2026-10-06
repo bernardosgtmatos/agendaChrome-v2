@@ -33,7 +33,7 @@ app.use('/events',EventRoute)
 const databaseSYNC = async () => {
     try {
         await sequelize.authenticate()
-        sequelize.sync({})
+        await sequelize.sync({})
     } catch (error) {
         return console.error(`'erro no authenticate do sequelize no arquivo serve.js, ${error}`)
     }

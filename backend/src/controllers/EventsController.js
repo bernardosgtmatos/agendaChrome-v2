@@ -3,6 +3,7 @@ const { horario_retirada, horarios_devolução } = require("../model/HorariosMod
 const Turmas = require("../model/TurmasModel")
 const local = require("../model/LocalModel")
 const { Usuario, Agendamento } = require("../model")
+const { getOcupacao } = require("../services/EstoqueService")
 
 const ListHorarios_ret = async (req,res) => {
     try {
@@ -75,4 +76,26 @@ const listAgend = async (req,res) => {
     }
     }
 
-module.exports = {ListHorarios_ret,ListHorarios_devol,ListTurmas,listLocal,listUsers,listAgend}
+const getDisponibilidade = async (req,res) => {
+    const {date, data_retirada, data_devolucao} = req.query
+    if(!date||!data_retirada||!data_devolucao){
+        return res.status(400).json({
+            message: 'Informe date (YYYY-MM-DD), data_retirada e data_devolucao'
+        })
+    }
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(date)){
+        return res.status(400).json({
+            message: 'date deve estar no formato YYYY-MM-DD'
+        })
+    }
+    try {
+        const info = await getOcupacao(date, data_retirada, data_devolucao)
+        return res.status(200).json(info)
+    } catch (error) {
+        return res.status(error.status || 500).json({
+            message: error.message
+        })
+    }
+}
+
+module.exports = {ListHorarios_ret,ListHorarios_devol,ListTurmas,listLocal,listUsers,listAgend,getDisponibilidade}

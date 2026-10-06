@@ -6,6 +6,7 @@ const Turmas = require("../model/TurmasModel")
 const local = require("../model/LocalModel")
 const Usuario = require("../model/UserModel")
 const Agendamento = require("../model/AgendamentoModel")
+const { checkDisponibilidade } = require("../services/EstoqueService")
 
 
 
@@ -13,11 +14,17 @@ const Novoagendamento = async (req,res) => {
     const t = await sequelize.transaction()
     const usuario_id = req.user.id
     console.log(usuario_id)
-    const {data_retirada, data_devolucao, quantidade, turma, Local, observacao } = req.body
-    if(!usuario_id||!data_retirada||!data_devolucao||!quantidade||!turma||!Local){
+    const {date, data_retirada, data_devolucao, quantidade, turma, Local, observacao } = req.body
+    if(!usuario_id||!date||!data_retirada||!data_devolucao||!quantidade||!turma||!Local){
         await t.rollback()
         return res.status(400).json({
             message: 'todos os campos são obrigatórios (exceto obs.)'
+        })
+    }
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(date)){
+        await t.rollback()
+        return res.status(400).json({
+            message: 'date deve estar no formato YYYY-MM-DD'
         })
     }
     const ValidQnt = typeof(quantidade) === 'number' &&  Number.isInteger(quantidade) && quantidade > 0;
@@ -76,22 +83,36 @@ const Novoagendamento = async (req,res) => {
                 message: 'Este usuario não existe!'
             })
         }
+        // Controle de estoque: pool único de 36, bloqueio por intervalo sobreposto no mesmo date.
+        // Devolução é automática (sai da soma após date+hora_devolucao); Cancelado sai na hora.
+        try {
+            await checkDisponibilidade(date, data_retirada, data_devolucao, Number(quantidade), { transaction: t })
+        } catch (e) {
+            await t.rollback()
+            const code = e.status || 500
+            return res.status(code).json({
+                message: e.message,
+                ...(e.detalhe ? { estoque: e.detalhe } : {})
+            })
+        }
         try {
             const Novoagendamento = await Agendamento.create({
                 usuario_id: DB_User.id,
+                date: date,
                 data_retirada: DB_data_ret.id,
                 data_devolucao: DB_data_devol.id,
                 quantidade: Number(quantidade),
                 turma: DB_turma.id,
                 local_id: DB_local.id,
-                observacao: observacao
+                observacao: observacao,
+                status: 'Pendente'
             },
                 {transaction: t,}
             )
             await t.commit()
             await console.log(`Agendamento realizado User_ID : ${DB_User.id}, Agendamento_ID: ${Novoagendamento.id}`)        
             return res.status(201).json({
-                message: `Agendamento para o realizado com sucesso para o dia:`,
+                message: `Agendamento para o realizado com sucesso para o dia: ${date}`,
                 agendamento_id: Novoagendamento.id 
             })
         } catch (error) {
@@ -131,7 +152,7 @@ const listAgendamentos = async (req,res) => {
 
 const cancelarAgendamento = async (req,res) => {
     const usuario_id = req.user.id
-    const {agendamento_id} = req.body // esse user_id deve vir do cookie-peaser e ser comparado
+    const {agendamento_id} = req.body 
     const t = await sequelize.transaction()
     if(!agendamento_id){
         console.log('agendamento_id inexistente')
@@ -148,7 +169,7 @@ const cancelarAgendamento = async (req,res) => {
         })
     }
     try {
-        const Agend_id = await Agendamento.findOne({where:{id:agendamento_id, usuario_id: usuario_id}, transaction: t}) // talvez se der algum erro com relacionamento entre agendamento e user : "Você busca todos os agendamentos do usuário e tenta comparar com um único ID. O correto é buscar diretamente o agendamento pelo id e pelo usuario_id, ou então buscar pelo id e comparar o usuario_id da linha."
+        const Agend_id = await Agendamento.findOne({where:{id:agendamento_id, usuario_id: usuario_id}, transaction: t}) 
         if(!Agend_id ){ 
             console.log('ID do agendamento nao existe na tabela.')
             await t.rollback()
@@ -157,15 +178,17 @@ const cancelarAgendamento = async (req,res) => {
             })
         }
         if(Agend_id.usuario_id !== usuario_id){
-            await t.rollback()
             console.log('usuario esta tentando cancelar agendamento que não lhe pertence')
             await t.rollback()
             return res.status(403).json({
                 message: 'Este agendamento não pertence a você, Porfavor selecione apenas os agendamentos pertencentes a você.'
             })
         }
-        if(Agend_id.status == 'cancelado'){
-            return res.status(404).json({
+        if(Agend_id.status == 'Cancelado'){
+            if (!t.finished){
+                await t.rollback()
+            }
+            return res.status(409).json({
                 message: 'Este agendamento ja foi cancelado.'
             })
         }
