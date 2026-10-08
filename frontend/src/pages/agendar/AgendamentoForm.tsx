@@ -68,7 +68,7 @@ const SLOTS_DO_DIA: SlotDia[] = [
   { nome: '4º Aula', inicio: '09:50', fim: '10:40', rotulo: '09:50 - 10:40' },
   { nome: '5º Aula', inicio: '10:40', fim: '11:30', rotulo: '10:40 - 11:30' },
   { nome: '6º Aula', inicio: '12:20', fim: '13:10', rotulo: '12:20 - 13:10' },
-  { nome: '7º Aula', inicio: '13:10', fim: '14:00', rotulo: '13:30 - 14:00' },
+  { nome: '7º Aula', inicio: '13:10', fim: '14:00', rotulo: '13:10 - 14:00' },
 ]
 
 type LinhaTabela = {
@@ -679,11 +679,22 @@ function AgendamentoForm() {
 
           <form onSubmit={enviar} noValidate>
             <div className="campo campo--cheio">
-              <label htmlFor="professor">Professor*</label>
-              <input id="professor" type="text" value={usuario?.nome ?? ''} disabled readOnly />
+              {/* <label htmlFor="professor">Professor*</label> este campo não precisa ser preenchido, o id do usuario é enviado pelo cookie.
+              <input id="professor" type="text" value={usuario?.nome ?? ''} disabled readOnly /> */}
             </div>
 
             <div className="form-duplo">
+              <div className="campo">
+                <label htmlFor="date">Data de Agendamento*</label>
+                <input
+                  id="date"
+                  type="date"
+                  value={dados.date}
+                  disabled={enviando}
+                  onChange={(e) => atualizar('date', e.target.value)}
+                  required
+                />
+              </div>
               <div className="campo">
                 <label htmlFor="quantidade">Quantidade*</label>
                 <input
@@ -699,17 +710,27 @@ function AgendamentoForm() {
                   required
                 />
               </div>
-              <div className="campo">
-                <label htmlFor="date">Data de Agendamento*</label>
-                <input
-                  id="date"
-                  type="date"
-                  value={dados.date}
-                  disabled={enviando}
-                  onChange={(e) => atualizar('date', e.target.value)}
-                  required
-                />
-              </div>
+            </div>
+
+            <div className="form-duplo">
+              <Selecao
+                id="data_retirada"
+                rotulo="Aula de Retirada*"
+                valor={dados.data_retirada}
+                opcoes={opcoes.retirada}
+                vazio="Selecione"
+                desabilitado={enviando}
+                aoMudar={(v) => atualizar('data_retirada', v)}
+              />
+              <Selecao
+                id="data_devolucao"
+                rotulo="Aula de Devolução*"
+                valor={dados.data_devolucao}
+                opcoes={opcoes.devolucao}
+                vazio="Selecione"
+                desabilitado={enviando}
+                aoMudar={(v) => atualizar('data_devolucao', v)}
+              />
             </div>
 
             <div className="form-duplo">
@@ -723,18 +744,6 @@ function AgendamentoForm() {
                 aoMudar={(v) => atualizar('turma', v)}
               />
               <Selecao
-                id="data_retirada"
-                rotulo="Aula de Retirada*"
-                valor={dados.data_retirada}
-                opcoes={opcoes.retirada}
-                vazio="Selecione"
-                desabilitado={enviando}
-                aoMudar={(v) => atualizar('data_retirada', v)}
-              />
-            </div>
-
-            <div className="form-duplo">
-              <Selecao
                 id="Local"
                 rotulo="Local*"
                 valor={dados.Local}
@@ -742,15 +751,6 @@ function AgendamentoForm() {
                 vazio="Selecione"
                 desabilitado={enviando}
                 aoMudar={(v) => atualizar('Local', v)}
-              />
-              <Selecao
-                id="data_devolucao"
-                rotulo="Aula de Devolução*"
-                valor={dados.data_devolucao}
-                opcoes={opcoes.devolucao}
-                vazio="Selecione"
-                desabilitado={enviando}
-                aoMudar={(v) => atualizar('data_devolucao', v)}
               />
             </div>
 
