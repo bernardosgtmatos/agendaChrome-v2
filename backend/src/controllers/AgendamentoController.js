@@ -11,9 +11,17 @@ const { checkDisponibilidade, checkLocalLivre } = require("../services/EstoqueSe
 
 
 const Novoagendamento = async (req,res) => {
+    const hojeLocal = () => {
+        const date = new Date()
+        const data = date.toLocaleDateString('sv-SE',{timeZone:'America/Sao_Paulo'}) // YYYY-MM-DD format
+        const hora = date.toLocaleTimeString('pt-BR',{hour:'2-digit', minute:'2-digit',hour12:false,timeZone:'America/Sao_Paulo'}) // HH:MM
+        const [h,m] = hora.split(':').map(Number)
+        return { data, hora, minutos: h*60+m}
+        }
+    const hoje = hojeLocal()
     const t = await sequelize.transaction()
     const usuario_id = req.user.id
-    console.log(usuario_id)
+    // console.log(usuario_id)
     const {date, data_retirada, data_devolucao, quantidade, turma, Local, observacao } = req.body
     if(!usuario_id||!date||!data_retirada||!data_devolucao||!quantidade||!turma||!Local){
         await t.rollback()
@@ -25,6 +33,13 @@ const Novoagendamento = async (req,res) => {
         await t.rollback()
         return res.status(400).json({
             message: 'date deve estar no formato YYYY-MM-DD'
+        })
+    }
+    if (date < hoje.data){ //data passada ja bloqueia aqui
+        console.log('data invalida para o agendamento')
+        await t.rollback()
+        return res.status(400).json({
+            message: 'Error agendamento com data inválida: data anterior.'
         })
     }
     const ValidQnt = typeof(quantidade) === 'number' &&  Number.isInteger(quantidade) && quantidade > 0;
@@ -41,7 +56,7 @@ const Novoagendamento = async (req,res) => {
         
         //valida horario retirada
         const DB_data_ret = await horario_retirada.findOne({where:{ id: data_retirada}})
-        console.log((data_retirada));
+        // console.log((data_retirada));
         
         if (!DB_data_ret){
             console.error('Horario de retirada inexistente')
@@ -58,6 +73,15 @@ const Novoagendamento = async (req,res) => {
             return res.status(404).json({
                 message: 'Horario de devolução inexistente'
             })
+        }
+        if (date === hoje.data){ //se a data do agendamento for no mesmo dia valida horario anterior
+            if (DB_data_ret.horario_retirada <= hoje.hora || DB_data_devol.horarios_devolução <= hoje.hora){
+                await t.rollback()
+                console.log('tentativa de agendar em horario passado.')
+                return res.status(400).json({
+                    message:'Erro ao tentar agendar horario passado.'
+                })
+            }
         }
         const DB_turma = await Turmas.findOne({where:{id: turma}})
         if(!DB_turma){
