@@ -77,7 +77,7 @@ const Agendamento = sequelize.define('Agendamento',{
         allowNull: false
     }
 },{
-    indexes:[{fields:['date']},{fields:['status']}]
+    indexes:[{fields:['date']},{fields:['status']},{fields:['date','local_id']}]
 })
 
 // ta invertido as associações, todos os belongs vão para tabela agendamento

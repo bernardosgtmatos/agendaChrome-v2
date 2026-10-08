@@ -1,142 +1,687 @@
-.agendamento-form {
-  margin: 40px auto 80px;
-  padding: 32px;
-  max-width: 680px;
-  text-align: left;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--code-bg);
-  box-shadow: var(--shadow);
+.agendar {
+  --ag-bg: #e8f0f7;
+  --ag-bar: #a6d5e8;
+  --ag-bar-pill: rgba(255, 255, 255, 0.35);
+  --ag-card: rgba(255, 255, 255, 0.5);
+  --ag-stroke: #1f6e8c;
+  --ag-ink: #111;
+  --ag-btn: #8fc9e4;
+  --ag-btn-sec: #cfe8f3;
+  --ag-ok: #b7e4a8;
+  --ag-warn: #fff176;
+  --ag-err: #f4a9a9;
+  background: var(--ag-bg);
+  min-height: 100svh;
+  padding: 0 33px 64px;
+  box-sizing: border-box;
+  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+  color: var(--ag-ink);
 }
 
-.agendamento-form h1 {
-  font-size: 32px;
-  letter-spacing: -0.96px;
-  margin: 0 0 8px;
-
-  @media (max-width: 1024px) {
-    font-size: 26px;
-  }
+.agendar-topo {
+  position: relative;
+  padding: 34px 0 22px;
+  text-align: center;
 }
 
-.agendamento-form__descricao {
+.agendar-topo h1 {
+  margin: 0;
+  font-size: clamp(30px, 5vw, 46px);
+  font-weight: 600;
+  letter-spacing: -0.5px;
+  color: #111;
+}
+
+.agendar-usuario {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #bfdff0;
+  border-radius: 0 0 18px 18px;
+  padding: 8px 14px;
+  font-size: 15px;
+}
+
+.agendar-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #9aa5ad;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+
+.agendar-nome {
+  font-weight: 500;
+}
+
+.agendar-engrenagem {
+  border: 0;
+  background: transparent;
+  color: #2e9bd0;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  display: inline-flex;
+}
+
+.agendar-engrenagem:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.agendar-barra {
+  max-width: 1381px;
+  margin: 0 auto 16px;
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  background: var(--ag-bar);
+  border-radius: 30px;
+  padding: 10px 28px;
+  box-sizing: border-box;
+  font-size: 17px;
+}
+
+.agendar-barra__rotulo {
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.agendar-data {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--ag-bar-pill);
+  border-radius: 999px;
+  padding: 8px 18px;
+  font-size: 17px;
+  cursor: pointer;
+}
+
+.agendar-data input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+}
+
+.agendar-dica {
+  margin: 0 0 0 auto;
+  font-size: 13px;
+  line-height: 1.35;
+  text-align: right;
+  max-width: 420px;
+}
+
+.agendar-abas {
+  display: flex;
+  gap: 0;
+}
+
+.agendar-aba {
+  font: inherit;
   font-size: 16px;
-  margin: 0 0 24px;
+  padding: 8px 34px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  color: var(--ag-ink);
 }
 
-.agendamento-form__aviso {
-  margin: 40px auto;
-  padding: 16px 20px;
-  max-width: 680px;
+.agendar-aba--ativa {
+  background: var(--ag-bar-pill);
+  border-color: var(--ag-stroke);
+}
+
+.agendar-aba:focus-visible {
+  outline: 3px solid var(--ag-stroke);
+  outline-offset: 2px;
+}
+
+.agendar-grid {
+  max-width: 1381px;
+  margin: 22px auto 0;
+  display: grid;
+  grid-template-columns: minmax(0, 835fr) minmax(0, 525fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.agendar-painel {
+  background: var(--ag-card);
+  border-radius: 30px;
+  padding: 22px 26px 30px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.tabela-disp__wrap {
+  min-width: 0;
+}
+
+.agendar-tabela {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 12px;
+  font-size: 15px;
+  table-layout: fixed;
+}
+
+.agendar-tabela--matriz {
+  min-width: 0;
+}
+
+.agendar-tabela thead th {
+  font-size: 17px;
+  font-weight: 500;
+  text-align: center;
+  padding: 0 10px 10px;
+  border-bottom: 1px solid #111;
+  white-space: nowrap;
+}
+
+.agendar-tabela thead th + th {
+  border-left: 1px solid #111;
+}
+
+.agendar-tabela thead th:first-child {
   text-align: left;
-  font-size: 16px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--code-bg);
+  padding-left: 22px;
 }
 
-.agendamento-form__aviso--erro {
-  border-color: rgba(220, 38, 38, 0.4);
-  background: rgba(220, 38, 38, 0.12);
-  color: var(--text-h);
+.agendar-tabela tbody td {
+  padding: 0 6px;
+  vertical-align: middle;
+  text-align: center;
+}
+
+.agendar-tabela tbody td:first-child {
+  text-align: left;
+}
+
+.celula {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: #fff;
+  border: 1px solid var(--ag-stroke);
+  border-radius: 999px;
+  padding: 8px 20px;
+  white-space: nowrap;
+  font-size: 14px;
+}
+
+td:first-child .celula {
+  justify-content: flex-start;
+}
+
+.celula--qtd strong {
+  font-weight: 500;
+}
+
+.mini-barra {
+  display: inline-block;
+  width: 130px;
+  height: 12px;
+  border-radius: 999px;
+  border: 1px solid var(--ag-stroke);
+  background: #fff;
+  overflow: hidden;
+}
+
+.mini-barra i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+}
+
+.mini-barra--disponivel i {
+  background: #7ed47a;
+}
+
+.mini-barra--limitado i {
+  background: #f2e800;
+}
+
+.mini-barra--critico i {
+  background: #e05252;
+}
+
+.mini-barra--indisponivel i {
+  background: transparent;
+}
+
+.mini-barra--vazio i {
+  background: transparent;
+}
+
+.estado {
+  display: inline-block;
+  border-radius: 999px;
+  border: 1px solid var(--ag-stroke);
+  padding: 8px 26px;
+  font-size: 14px;
+  white-space: nowrap;
+  min-width: 130px;
+  box-sizing: border-box;
+}
+
+.estado--disponivel {
+  background: var(--ag-ok);
+}
+
+.estado--limitado {
+  background: var(--ag-warn);
+}
+
+.estado--indisponivel {
+  background: var(--ag-err);
+}
+
+.estado--critico {
+  background: var(--ag-err);
+}
+
+.estado--vazio {
+  background: #fff;
+  opacity: 0.7;
+}
+
+.celula--local {
+  min-width: 110px;
+}
+
+.celula--livre {
+  background: var(--ag-ok);
+}
+
+.celula--ocupado {
+  background: var(--ag-err);
+}
+
+.agendar-painel--form h2 {
+  margin: 4px 0 6px;
+  text-align: center;
+  font-size: 26px;
+  font-weight: 500;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #111;
 }
 
 .campo {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin-bottom: 16px;
+  gap: 4px;
+  margin-bottom: 12px;
 }
 
 .campo label {
-  font-size: 15px;
-  color: var(--text-h);
+  font-size: 14px;
 }
 
 .campo input,
 .campo select,
 .campo textarea {
   font: inherit;
-  font-size: 16px;
-  padding: 10px 12px;
-  color: var(--text-h);
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  font-size: 14px;
+  height: 42px;
+  padding: 0 14px;
+  color: var(--ag-ink);
+  background: #fff;
+  border: 1px solid #5b8fa8;
+  border-radius: 10px;
   width: 100%;
   box-sizing: border-box;
+  outline: none;
 }
 
 .campo textarea {
+  height: auto;
+  min-height: 110px;
+  padding: 12px 14px;
   resize: vertical;
+}
+
+.campo input:disabled {
+  background: #eef3f6;
+  color: #555;
 }
 
 .campo input:focus-visible,
 .campo select:focus-visible,
 .campo textarea:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
-  border-color: var(--accent-border);
+  border-color: var(--ag-stroke);
+  box-shadow: 0 0 0 3px rgba(166, 213, 232, 0.6);
 }
 
-.campo input:disabled,
-.campo select:disabled,
-.campo textarea:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+.campo--cheio {
+  grid-column: 1 / -1;
 }
 
-.linha {
+.form-duplo {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0 16px;
+}
 
-  @media (max-width: 640px) {
-    grid-template-columns: 1fr;
-  }
+.form-acoes {
+  display: flex;
+  gap: 14px;
+  margin-top: 10px;
+}
+
+.btn {
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid var(--ag-stroke);
+}
+
+.btn--primario {
+  flex: 1;
+  min-height: 44px;
+  border-radius: 999px;
+  background: var(--ag-btn);
+  color: var(--ag-ink);
+  font-size: 16px;
+}
+
+.btn--secundario {
+  min-width: 130px;
+  min-height: 44px;
+  border-radius: 999px;
+  background: #8fc9e4;
+  font-size: 16px;
+  color: #111;
+}
+
+.btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.btn:focus-visible {
+  outline: 3px solid var(--ag-stroke);
+  outline-offset: 2px;
 }
 
 .alerta {
   padding: 12px 16px;
-  margin: 0 0 20px;
-  font-size: 15px;
-  border-radius: 8px;
-  color: var(--text-h);
+  margin: 0 0 14px;
+  font-size: 14px;
+  border-radius: 10px;
 }
 
 .alerta--erro {
-  background: rgba(220, 38, 38, 0.12);
-  border: 1px solid rgba(220, 38, 38, 0.4);
+  background: rgba(244, 169, 169, 0.35);
+  border: 1px solid #c0392b;
 }
 
 .alerta--sucesso {
-  background: rgba(34, 197, 94, 0.14);
-  border: 1px solid rgba(34, 197, 94, 0.4);
+  background: rgba(183, 228, 168, 0.4);
+  border: 1px solid #2e7d32;
 }
 
-.enviar {
-  font: inherit;
-  font-size: 16px;
-  padding: 12px 20px;
-  margin-top: 8px;
-  color: #fff;
-  background: var(--accent);
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: filter 0.2s;
+.agendar-aviso {
+  margin: 40px auto;
+  padding: 16px 20px;
+  max-width: 680px;
+  font-size: 15px;
+  border: 1px solid var(--ag-stroke);
+  border-radius: 12px;
+  background: #fff;
+}
 
-  &:hover:not(:disabled) {
-    filter: brightness(1.1);
+.agendar-aviso--erro {
+  border-color: #c0392b;
+  background: rgba(244, 169, 169, 0.25);
+}
+
+.agendar-ver-lista {
+  width: 100%;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: var(--ag-btn);
+  border: 1px solid var(--ag-stroke);
+  border-radius: 30px;
+  padding: 20px;
+  font-size: 18px;
+  color: var(--ag-ink);
+  text-decoration: none;
+  box-sizing: border-box;
+}
+
+.agendar-ver-lista:hover {
+  filter: brightness(1.05);
+}
+
+.agendar-coluna-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+}
+
+@media (max-width: 1024px) {
+  .agendar {
+    padding: 0 16px calc(48px + env(safe-area-inset-bottom));
   }
 
-  &:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
+  .agendar-usuario {
+    position: static;
+    display: inline-flex;
+    margin-top: 12px;
+    border-radius: 999px;
   }
 
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
+  .agendar-barra {
+    flex-wrap: wrap;
+    border-radius: 24px;
+  }
+
+  .agendar-dica {
+    text-align: left;
+    margin-left: 0;
+  }
+
+  .agendar-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .agendar-tabela .celula {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .form-duplo {
+    grid-template-columns: 1fr;
+  }
+
+  .agendar-ver-lista {
+    width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .agendar-painel {
+    border-radius: 24px;
+    padding: 18px 14px 24px;
+  }
+
+  .agendar-barra {
+    font-size: 15px;
+    padding: 10px 18px;
+    gap: 12px;
+  }
+
+  .agendar-barra__rotulo {
+    white-space: normal;
+  }
+
+  .agendar-data {
+    flex: 1 1 100%;
+    justify-content: center;
+    min-height: 48px;
+    box-sizing: border-box;
+  }
+
+  .agendar-abas {
+    flex: 1 1 100%;
+    display: flex;
+  }
+
+  .agendar-aba {
+    flex: 1;
+    min-height: 48px;
+    padding: 8px 10px;
+    font-size: 15px;
+  }
+
+  .agendar-engrenagem {
+    padding: 9px;
+  }
+
+  .agendar-tabela {
+    font-size: 13px;
+    border-spacing: 0 10px;
+  }
+
+  .agendar-tabela thead th {
+    font-size: 14px;
+    white-space: normal;
+    padding: 0 6px 8px;
+  }
+
+  .agendar-tabela thead th:first-child {
+    padding-left: 10px;
+  }
+
+  .celula {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    padding: 8px 12px;
+    font-size: 13px;
+    gap: 8px;
+  }
+
+  .mini-barra {
+    width: 100%;
+    min-width: 70px;
+  }
+
+  .estado {
+    padding: 8px 12px;
+    font-size: 12px;
+    min-width: 0;
+  }
+
+  .campo input,
+  .campo select,
+  .campo textarea {
+    font-size: 16px;
+    min-height: 48px;
+  }
+
+  .btn--primario,
+  .btn--secundario {
+    min-height: 52px;
+    width: 100%;
+    font-size: 16px;
+  }
+
+  .form-acoes {
+    flex-direction: column;
+  }
+
+  .agendar-ver-lista {
+    min-height: 56px;
+    font-size: 17px;
+  }
+}
+
+@media (max-width: 640px) {
+  .agendar-tabela tbody,
+  .agendar-tabela tr,
+  .agendar-tabela td {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .agendar-tabela thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .agendar-tabela tbody tr {
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid var(--ag-stroke);
+    border-radius: 21px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+  }
+
+  .agendar-tabela tbody td {
+    padding: 4px 0;
+    text-align: left;
+  }
+
+  .agendar-tabela tbody td:first-child {
+    text-align: left;
+  }
+
+  .agendar-tabela .celula,
+  .agendar-tabela .estado {
+    width: 100%;
+    box-sizing: border-box;
+    justify-content: center;
+  }
+
+  td:first-child .celula {
+    justify-content: center;
+  }
+
+  .agendar-tabela--matriz tbody tr {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .agendar-tabela--matriz tbody td:first-child {
+    flex: 1 1 100%;
+  }
+
+  .agendar-tabela--matriz tbody td + td {
+    flex: 1 1 calc(50% - 8px);
+    padding: 0;
+  }
+
+  .agendar-tabela--matriz .celula--local {
+    width: 100%;
+    box-sizing: border-box;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .agendar * {
+    animation: none;
+    transition: none;
   }
 }

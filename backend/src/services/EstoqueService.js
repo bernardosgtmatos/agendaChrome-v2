@@ -1,8 +1,10 @@
 // Regra central do estoque (pool único de 36, bloqueio por intervalo sobreposto,
-// devolução automática por horário — sem cron, sem tabela de saldo).
+// devolução automática por horário — sem cron, sem tabela de saldo)
+// + trava de local exclusivo (Opção A).
 //
 // Definições travadas:
 // - Estoque calculado: disponivel = ESTOQUE_TOTAL - SUM(quantidade sobreposta no mesmo date)
+// - Local exclusivo: EXISTS(mesmo date + mesmo local_id + intervalo sobreposto + status ocupante) -> 409
 // - Sobreposição: [retExist, devExist) cruza [retNovo, devNovo)
 // - Fora da soma: status 'Cancelado'. 'Pendente'/'Em progresso'/'Finalizado' ocupam no dia.
 // - Passou de date+hora_devolucao, a reserva sai da soma sozinha (leitura filtra por date).
@@ -84,4 +86,57 @@ async function checkDisponibilidade(date, data_retirada, data_devolucao, quantid
   return info;
 }
 
-module.exports = { ESTOQUE_TOTAL, STATUS_OCUPANTES, getOcupacao, checkDisponibilidade, resolveIntervalo };
+// Trava de local exclusivo: mesmo date + mesmo local_id + intervalo sobreposto.
+async function getOcupacaoLocal(date, local_id, data_retirada, data_devolucao, opts = {}) {
+  const { retT, devT } = await resolveIntervalo(data_retirada, data_devolucao);
+
+  const [rets, devs, ags] = await Promise.all([
+    horario_retirada.findAll({ transaction: opts.transaction || undefined }),
+    horarios_devolução.findAll({ transaction: opts.transaction || undefined }),
+    Agendamento.findAll({
+      where: { date, local_id, status: STATUS_OCUPANTES },
+      attributes: ['id', 'data_retirada', 'data_devolucao', 'quantidade', 'status'],
+      transaction: opts.transaction || undefined,
+    }),
+  ]);
+
+  const mapR = new Map(rets.map((r) => [String(r.id), r.horario_retirada]));
+  const mapD = new Map(devs.map((d) => [String(d.id), d['horarios_devolução']]));
+
+  for (const a of ags) {
+    const r = mapR.get(String(a.data_retirada));
+    const d = mapD.get(String(a.data_devolucao));
+    if (!r || !d) continue;
+    if (r < devT && d > retT) {
+      return {
+        ocupado: true,
+        por: {
+          agendamento_id: a.id,
+          retirada: r,
+          devolucao: d,
+          quantidade: Number(a.quantidade) || 0,
+          status: a.status,
+        },
+        retirada: retT,
+        devolucao: devT,
+      };
+    }
+  }
+
+  return { ocupado: false, por: null, retirada: retT, devolucao: devT };
+}
+
+async function checkLocalLivre(date, local_id, data_retirada, data_devolucao, opts = {}) {
+  const info = await getOcupacaoLocal(date, local_id, data_retirada, data_devolucao, opts);
+  if (info.ocupado) {
+    const e = new Error(
+      `Local ocupado neste intervalo (${info.por.retirada}–${info.por.devolucao}, ${info.por.quantidade} chromebooks). Escolha outro local ou horário.`
+    );
+    e.status = 409;
+    e.detalhe = info;
+    throw e;
+  }
+  return info;
+}
+
+module.exports = { ESTOQUE_TOTAL, STATUS_OCUPANTES, getOcupacao, checkDisponibilidade, resolveIntervalo, getOcupacaoLocal, checkLocalLivre };

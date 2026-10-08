@@ -1,26 +1,27 @@
 .agendamento-lista {
-  margin: 40px auto 80px;
-  padding: 32px;
-  max-width: 1100px;
+  --lista-bg: #e8f0f7;
+  --lista-card: rgba(255, 255, 255, 0.5);
+  --lista-stroke: #1f6e8c;
+  --lista-ink: #111;
+  --lista-btn: #8fc9e4;
+  margin: 0 auto 80px;
+  padding: 28px 33px;
+  max-width: 1381px;
+  box-sizing: border-box;
   text-align: left;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--code-bg);
-  box-shadow: var(--shadow);
+  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+  color: var(--lista-ink);
 }
 
 .agendamento-lista h1 {
-  font-size: 32px;
-  letter-spacing: -0.96px;
+  font-size: clamp(26px, 4vw, 32px);
+  letter-spacing: -0.5px;
   margin: 0 0 8px;
-
-  @media (max-width: 1024px) {
-    font-size: 26px;
-  }
+  color: var(--lista-ink);
 }
 
 .agendamento-lista__descricao {
-  font-size: 16px;
+  font-size: 15px;
   margin: 0 0 24px;
 }
 
@@ -30,15 +31,14 @@
   max-width: 1100px;
   text-align: left;
   font-size: 16px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--lista-stroke);
   border-radius: 12px;
-  background: var(--code-bg);
+  background: #fff;
 }
 
 .agendamento-lista__aviso--erro {
-  border-color: rgba(220, 38, 38, 0.4);
-  background: rgba(220, 38, 38, 0.12);
-  color: var(--text-h);
+  border-color: #c0392b;
+  background: rgba(244, 169, 169, 0.25);
 }
 
 .agendamento-lista__vazio {
@@ -46,49 +46,174 @@
   margin: 0;
   text-align: center;
   font-size: 16px;
-  color: var(--text-h);
-  border: 1px dashed var(--border);
-  border-radius: 8px;
+  background: var(--lista-card);
+  border: 1px dashed var(--lista-stroke);
+  border-radius: 21px;
 }
 
 .agendamento-lista__rolagem {
-  overflow-x: auto;
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  background: var(--lista-card);
+  border-radius: 30px;
+  padding: 18px 20px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  box-sizing: border-box;
+  min-width: 0;
 }
 
 .agendamento-lista__tabela {
   width: 100%;
-  border-collapse: collapse;
-  font-size: 15px;
+  border-collapse: separate;
+  border-spacing: 0 10px;
+  font-size: 14px;
+  table-layout: fixed;
 }
 
 .agendamento-lista__tabela th,
 .agendamento-lista__tabela td {
-  padding: 12px 14px;
+  padding: 10px 12px;
   text-align: left;
-  white-space: nowrap;
-  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+  overflow-wrap: anywhere;
 }
 
 .agendamento-lista__tabela th {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.4px;
-  color: var(--text-h);
-  background: var(--bg);
+  border-bottom: 1px solid var(--lista-ink);
+  white-space: nowrap;
 }
 
-.agendamento-lista__tabela tbody tr:last-child td {
-  border-bottom: none;
+.agendamento-lista__tabela tbody td {
+  background: #fff;
+  border-top: 1px solid var(--lista-stroke);
+  border-bottom: 1px solid var(--lista-stroke);
 }
 
-.agendamento-lista__tabela tbody tr:hover td {
-  background: var(--accent-bg);
+.agendamento-lista__tabela tbody td:first-child {
+  border-left: 1px solid var(--lista-stroke);
+  border-radius: 14px 0 0 14px;
+}
+
+.agendamento-lista__tabela tbody td:last-child {
+  border-right: 1px solid var(--lista-stroke);
+  border-radius: 0 14px 14px 0;
+}
+
+.agendamento-lista__tabela tbody button {
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  min-height: 44px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--lista-stroke);
+  background: var(--lista-btn);
+  color: var(--lista-ink);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.agendamento-lista__tabela tbody button:disabled {
+  opacity: 0.6;
+  cursor: wait;
 }
 
 .agendamento-lista__protocolo {
-  font-family: var(--mono);
+  font-family: ui-monospace, Consolas, monospace;
   font-size: 13px;
+}
+
+@media (max-width: 760px) {
+  .agendamento-lista {
+    padding: 20px 16px 48px;
+  }
+
+  .agendamento-lista__rolagem {
+    border-radius: 24px;
+    padding: 14px 12px;
+  }
+
+  .agendamento-lista__tabela,
+  .agendamento-lista__tabela tbody,
+  .agendamento-lista__tabela tr,
+  .agendamento-lista__tabela td {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .agendamento-lista__tabela {
+    border-spacing: 0;
+  }
+
+  .agendamento-lista__tabela thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .agendamento-lista__tabela tbody tr {
+    background: #fff;
+    border: 1px solid var(--lista-stroke);
+    border-radius: 21px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 14px;
+  }
+
+  .agendamento-lista__tabela tbody td {
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    padding: 0;
+    font-size: 14px;
+    min-width: 0;
+  }
+
+  .agendamento-lista__tabela tbody td::before {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    opacity: 0.65;
+    margin-bottom: 2px;
+  }
+
+  .agendamento-lista__tabela tbody td:nth-child(1)::before { content: 'Protocolo'; }
+  .agendamento-lista__tabela tbody td:nth-child(2)::before { content: 'Data'; }
+  .agendamento-lista__tabela tbody td:nth-child(3)::before { content: 'Retirada'; }
+  .agendamento-lista__tabela tbody td:nth-child(4)::before { content: 'Devolução'; }
+  .agendamento-lista__tabela tbody td:nth-child(5)::before { content: 'Quantidade'; }
+  .agendamento-lista__tabela tbody td:nth-child(6)::before { content: 'Turma'; }
+  .agendamento-lista__tabela tbody td:nth-child(7)::before { content: 'Local'; }
+  .agendamento-lista__tabela tbody td:nth-child(8)::before { content: 'Solicitante'; }
+  .agendamento-lista__tabela tbody td:nth-child(9)::before { content: 'Observação'; }
+  .agendamento-lista__tabela tbody td:nth-child(10)::before { content: 'Status'; }
+  .agendamento-lista__tabela tbody td:nth-child(11)::before { content: 'Ações'; }
+
+  .agendamento-lista__tabela tbody td:nth-child(1),
+  .agendamento-lista__tabela tbody td:nth-child(8),
+  .agendamento-lista__tabela tbody td:nth-child(9),
+  .agendamento-lista__tabela tbody td:nth-child(11) {
+    grid-column: 1 / -1;
+  }
+
+  .agendamento-lista__tabela tbody button {
+    width: 100%;
+    min-height: 48px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .agendamento-lista * {
+    animation: none;
+    transition: none;
+  }
 }

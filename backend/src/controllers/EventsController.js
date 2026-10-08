@@ -3,7 +3,7 @@ const { horario_retirada, horarios_devolução } = require("../model/HorariosMod
 const Turmas = require("../model/TurmasModel")
 const local = require("../model/LocalModel")
 const { Usuario, Agendamento } = require("../model")
-const { getOcupacao } = require("../services/EstoqueService")
+const { getOcupacao, getOcupacaoLocal } = require("../services/EstoqueService")
 
 const ListHorarios_ret = async (req,res) => {
     try {
@@ -77,7 +77,7 @@ const listAgend = async (req,res) => {
     }
 
 const getDisponibilidade = async (req,res) => {
-    const {date, data_retirada, data_devolucao} = req.query
+    const {date, data_retirada, data_devolucao, local_id} = req.query
     if(!date||!data_retirada||!data_devolucao){
         return res.status(400).json({
             message: 'Informe date (YYYY-MM-DD), data_retirada e data_devolucao'
@@ -90,7 +90,11 @@ const getDisponibilidade = async (req,res) => {
     }
     try {
         const info = await getOcupacao(date, data_retirada, data_devolucao)
-        return res.status(200).json(info)
+        if(!local_id){
+            return res.status(200).json({ ...info, local: null })
+        }
+        const localInfo = await getOcupacaoLocal(date, local_id, data_retirada, data_devolucao)
+        return res.status(200).json({ ...info, local: localInfo })
     } catch (error) {
         return res.status(error.status || 500).json({
             message: error.message

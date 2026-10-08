@@ -6,7 +6,7 @@ const Turmas = require("../model/TurmasModel")
 const local = require("../model/LocalModel")
 const Usuario = require("../model/UserModel")
 const Agendamento = require("../model/AgendamentoModel")
-const { checkDisponibilidade } = require("../services/EstoqueService")
+const { checkDisponibilidade, checkLocalLivre } = require("../services/EstoqueService")
 
 
 
@@ -84,7 +84,8 @@ const Novoagendamento = async (req,res) => {
             })
         }
         // Controle de estoque: pool único de 36, bloqueio por intervalo sobreposto no mesmo date.
-        // Devolução é automática (sai da soma após date+hora_devolucao); Cancelado sai na hora.
+        // + trava de local exclusivo (Opção A). Devolução automática nas duas travas;
+        // Cancelado sai na hora.
         try {
             await checkDisponibilidade(date, data_retirada, data_devolucao, Number(quantidade), { transaction: t })
         } catch (e) {
@@ -93,6 +94,16 @@ const Novoagendamento = async (req,res) => {
             return res.status(code).json({
                 message: e.message,
                 ...(e.detalhe ? { estoque: e.detalhe } : {})
+            })
+        }
+        try {
+            await checkLocalLivre(date, Local, data_retirada, data_devolucao, { transaction: t })
+        } catch (e) {
+            await t.rollback()
+            const code = e.status || 500
+            return res.status(code).json({
+                message: `Local ocupado neste intervalo (${DB_local.nome}): ${e.message}`,
+                ...(e.detalhe ? { local: e.detalhe } : {})
             })
         }
         try {

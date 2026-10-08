@@ -7,9 +7,11 @@ import Login from './pages/login/Login.tsx'
 import './App.css'
 
 function Layout() {
+  const location = useLocation()
+  const semNavBar = location.pathname === '/agendar'
   return (
     <>
-      <NavBar />
+      {!semNavBar && <NavBar />}
       <Outlet />
     </>
   )
@@ -20,7 +22,7 @@ function RequireAuth() {
   const location = useLocation()
 
   if (carregandoSessao) {
-    return <p className="agendamento-form__aviso">Carregando sessão...</p>
+    return <p className="agendar-aviso">Carregando sessão...</p>
   }
 
   if (!usuario) {
@@ -34,7 +36,7 @@ function Raiz() {
   const { usuario, carregandoSessao } = useAuth()
 
   if (carregandoSessao) {
-    return <p className="agendamento-form__aviso">Carregando sessão...</p>
+    return <p className="agendar-aviso">Carregando sessão...</p>
   }
 
   return <Navigate to={usuario ? '/agendar' : '/login'} replace />
