@@ -10,9 +10,10 @@ const ListHorarios_ret = async (req,res) => {
     const horario_ret = await horario_retirada.findAll()
         return res.status(200).json(horario_ret)
     } catch (error) {
+        console.error(error)
         return res.status(500).json({
             message: 'erro ao tentar listar os horarios',
-            error: error.message
+            // error: error.message
         })
     }
 }
@@ -22,9 +23,10 @@ const ListHorarios_devol = async (req,res) => {
         const horario_devol = await horarios_devolução.findAll()
         return res.status(200).json(horario_devol)
     } catch (error) {
+        console.error(error)
         return res.status(500).json({
             message: 'erro ao tentar listar os horarios',
-            error: error.message
+            // error: error.message
         })
     }
 }
@@ -34,9 +36,10 @@ const ListTurmas = async (req,res) => {
         const listTurmas = await Turmas.findAll()
         return res.status(200).json(listTurmas)
     } catch (error) {
+        console.error(error)
         return res.status(500).json({
             message: 'erro ao tentar listar as turmas',
-            error: error.message
+            // error: error.message
         })
     }
 }
@@ -46,9 +49,10 @@ const listLocal = async (req,res) => {
         const Local = await local.findAll()
         return res.status(200).json(Local)
     } catch (error) {
+        console.error(error)
         return res.status(500).json({
             message: 'erro ao tentar listar os locais',
-            error: error.message
+            // error: error.message
         })
     }
 }
@@ -57,24 +61,57 @@ const listUsers = async (req,res) => {
         const listUsuarios = await Usuario.findAll()
         return res.status(200).json(listUsuarios)
     } catch (error) {
+        console.error(error)
         return res.status(500).json({
             message: 'erro ao tentar listar usuarios',
-            error: error.message
+            // error: error.message
         })
     }
 }
 
 const listAgend = async (req,res) => {
-    try {
-        const list = await Agendamento.findAll()
-        return res.status(200).json(list)        
-    } catch (error) {
-        return res.status(500).json({
-            message: 'erro ao tentar listar agendamentos',
-            error: error.message
+    const {p,l} = req.query // precisa trocar. req.body é para rota post
+    let page = Number(p)
+    let limit = Number(l)
+    if(!Number.isInteger(page)||!Number.isInteger(limit)){
+        page = 1
+        limit = 10
+    }
+    if(page<=0||limit<=0){
+        page =1
+        limit=10
+    }
+    if(limit > 100||limit <= 0){
+        return res.status(400).json({
+            message:'limite de paginação incoerrente'
         })
     }
+    try {
+        const offset = (page -1)*limit
+        const {rows, count} = await Agendamento.findAndCountAll({
+            limit,
+            offset,
+            order: [['date', 'DESC']],
+        })
+        const totalPages = Math.ceil(count/limit) //pega o total de agendamentos e divide pela qnt por pagina e retonar a quantidade de pagina, se der um numero decimal arredonda pra cima e retorna uma pagina com menos agendamentos ate completar o grid
+        return res.status(200).json({
+            meta: {
+                total: count,
+                page,
+                limit,
+                totalPages,
+                hasNext: page < totalPages,
+                hasPrev: page > 1,
+            },
+            lista: rows
+        })
+    } catch (error) {
+        console.error(error)
+        return res.status(500).json({
+            message:'Erro ao tentar carregar a lista, por favor recarregue a pagina.'
+        })
     }
+}
 
 const getDisponibilidade = async (req,res) => {
     const {date, data_retirada, data_devolucao, local_id} = req.query

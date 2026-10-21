@@ -125,6 +125,40 @@
   font-size: 13px;
 }
 
+.agendamento-lista__paginacao {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.agendamento-lista__paginacao button {
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  min-height: 44px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--lista-stroke);
+  background: var(--lista-btn);
+  color: var(--lista-ink);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.agendamento-lista__paginacao button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.agendamento-lista__pagina {
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 @media (max-width: 760px) {
   .agendamento-lista {
     padding: 20px 16px 48px;
