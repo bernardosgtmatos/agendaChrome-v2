@@ -3,3 +3,5 @@ Database.sqlite
 node_modules/
 teste.js
 pages references/
+seed 1k linhas teste.js
+teste paginação.js

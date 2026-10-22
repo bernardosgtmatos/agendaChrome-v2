@@ -4,6 +4,7 @@ const Turmas = require("../model/TurmasModel")
 const local = require("../model/LocalModel")
 const { Usuario, Agendamento } = require("../model")
 const { getOcupacao, getOcupacaoLocal } = require("../services/EstoqueService")
+const sequelize = require('../config/Database')
 
 const ListHorarios_ret = async (req,res) => {
     try {
@@ -70,7 +71,7 @@ const listUsers = async (req,res) => {
 }
 
 const listAgend = async (req,res) => {
-    const {p,l} = req.query // precisa trocar. req.body é para rota post
+    const {p,l} = req.query 
     let page = Number(p)
     let limit = Number(l)
     if(!Number.isInteger(page)||!Number.isInteger(limit)){
