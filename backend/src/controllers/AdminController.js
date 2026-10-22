@@ -1,5 +1,7 @@
-const {Turmas,local,Usuario} = require('../model/index.js')
-const sequelize = require('../config/Database.js')
+const {Agendamento,Capacidade,Turmas,local,Usuario} = require('../model/index.js')
+const { ESTOQUE_TOTAL } = require('../config/estoque.js')
+
+const PERFIS = ['Coordenador', 'Professor']
 
 // const createAdminUser = async (req,res) => { // fazer um controler só pra criar o usuario admin para passar em outra rota com auth mais rigido
 //     const {nome, email, senha} = req.body
@@ -26,53 +28,163 @@ const sequelize = require('../config/Database.js')
 
 const createNewUsuario = async (req, res) => {
     const {nome, email, senha} = req.body
+    const perfil = req.body.perfil ?? 'Professor'
     if(!nome||!email||!senha){
-        return res.status(400).json(`Todos os campos são obrigatórios!`)
+        return res.status(400).json({
+            message: 'Todos os campos são obrigatórios!'
+        })
     }
-    const existUser = await Usuario.findOne({
-        where: {email}
-    })
-    if (existUser){
-        return res.status(500).json(`Este email ja esta sendo utilizado!`)
+    if(!PERFIS.includes(perfil)){
+        return res.status(400).json({
+            message: 'Perfil inválido. Use Coordenador ou Professor.'
+        })
     }
     try {
-        const NewUser = await Usuario.create({
+        const existUser = await Usuario.findOne({
+            where: {email}
+        })
+        if (existUser){
+            return res.status(409).json({
+                message: 'Este email já está sendo utilizado!'
+            })
+        }
+        await Usuario.create({
             nome,
             email,
-            senha
+            senha,
+            perfil
         })
-        return res.status(201).json(`Usuario ${nome}, criado com sucesso!`)
+        return res.status(201).json({
+            message: `Usuário ${nome} criado com sucesso!`
+        })
     } catch (error) {
-       return res.status(400).json(`erro ao tentar criar novo usuario, ${error}`)
+       console.error(error)
+       return res.status(400).json({
+           message: 'Erro ao tentar criar novo usuário.'
+       })
+    }
+}
+
+const editUsuario = async (req, res) => {
+    try {
+        const { id } = req.params
+        const { nome, email, senha } = req.body
+        if(!id){
+            return res.status(400).json({
+                message: 'id do usuário não fornecido.'
+            })
+        }
+        const usuario = await Usuario.scope(null).findByPk(id)
+        if(!usuario){
+            return res.status(404).json({
+                message: 'Usuário não encontrado.'
+            })
+        }
+        if(email && email !== usuario.email){
+            const existUser = await Usuario.findOne({ where: { email } })
+            if(existUser){
+                return res.status(409).json({
+                    message: 'Este email já está sendo utilizado!'
+                })
+            }
+        }
+        const dados = {}
+        if(nome !== undefined){
+            if(!nome.trim()) return res.status(400).json({ message: 'O nome não pode ficar vazio.' })
+            dados.nome = nome.trim()
+        }
+        if(email !== undefined){
+            if(!email.trim()) return res.status(400).json({ message: 'O email não pode ficar vazio.' })
+            dados.email = email.trim()
+        }
+        if(senha) dados.senha = senha
+
+        await usuario.update(dados)
+        return res.status(200).json({
+            message: 'Usuário atualizado com sucesso.'
+        })
+    } catch (error) {
+        console.error(error)
+        return res.status(500).json({
+            message: 'Erro ao tentar editar usuário.'
+        })
+    }
+}
+
+const DeleteUsuario = async (req, res) => {
+    try {
+        const { id } = req.params
+        if(!id){
+            return res.status(400).json({
+                message: 'id do usuário não fornecido.'
+            })
+        }
+        if(id === req.user.id){
+            return res.status(400).json({
+                message: 'Você não pode excluir a sua própria conta.'
+            })
+        }
+        const usuario = await Usuario.findByPk(id)
+        if(!usuario){
+            return res.status(404).json({
+                message: 'Usuário não encontrado.'
+            })
+        }
+        const agendamentos = await Agendamento.count({ where: { usuario_id: id } })
+        if(agendamentos > 0){
+            return res.status(409).json({
+                message: 'Este usuário possui agendamentos e não pode ser excluído.'
+            })
+        }
+        await usuario.destroy()
+        return res.status(200).json({
+            message: 'Usuário excluído com sucesso.'
+        })
+    } catch (error) {
+        console.error(error)
+        return res.status(500).json({
+            message: 'Erro ao tentar excluir usuário.'
+        })
     }
 }
 
 const novaTurma = async (req,res) => {
-    const {serie} = req.body
-    if(!serie){
-        return res.status(400).json(`Todos os campos são obrigatórios`)
+    const serie = req.body.serie ?? req.body.nome
+    if(!serie || !serie.trim()){
+        return res.status(400).json({
+            message: 'Todos os campos são obrigatórios'
+        })
     }
     try {
-        const novaTurma = await Turmas.create({
-            serie
+        const existente = await Turmas.findOne({ where: { serie: serie.trim() } })
+        if(existente){
+            return res.status(409).json({
+                message: 'Já existe uma turma com este nome.'
+            })
+        }
+        await Turmas.create({
+            serie: serie.trim()
         })
-        return res.status(200).json({
+        return res.status(201).json({
             message:'Turma criada com sucesso!'
         })
     } catch (error) {
-        return res.status(500).json(`erro ao tentar criar nova turma, ${error}`)
+        console.error(error)
+        return res.status(500).json({
+            message: 'Erro ao tentar criar nova turma.'
+        })
     }
 }
 const editTurma = async (req,res) => {
-    // const t = await sequelize.transaction()
     try {
-        const {id,nome} = req.body // fazer essa rota como metodo patch req.params.id
+        const id = req.params.id ?? req.body.id
+        const nome = req.body.nome ?? req.body.serie
         if(!id){
             return res.status(400).json({
                 message:'id da turma não fornecido'
             })
         }
-        if(!nome){
+        if(!nome || !nome.trim()){
             return res.status(400).json({
                 message:'nome novo da turma não fornecido!'
             })
@@ -83,7 +195,13 @@ const editTurma = async (req,res) => {
                 message:'Turma não encontrada'
             })
         }
-        await Turma.update({serie: nome})
+        const existente = await Turmas.findOne({ where: { serie: nome.trim() } })
+        if(existente && existente.id !== Turma.id){
+            return res.status(409).json({
+                message: 'Já existe uma turma com este nome.'
+            })
+        }
+        await Turma.update({serie: nome.trim()})
         return res.status(200).json({
             message:'nome da turma alterado com sucesso.'
         })
@@ -96,7 +214,7 @@ const editTurma = async (req,res) => {
 }
 const DeleteTurma = async (req,res) => { // funções que alteram o banco nesse nivel devem ter log.
     try {
-        const {id}= req.body
+        const id = req.params.id ?? req.body.id
         if(!id){
             return res.status(400).json({
                 message:'id não forncido.'
@@ -106,6 +224,12 @@ const DeleteTurma = async (req,res) => { // funções que alteram o banco nesse 
         if(!Turma){
             return res.status(404).json({
                 message:'Turma requisitada não existe ou ja foi deletada.'
+            })
+        }
+        const agendamentos = await Agendamento.count({ where: { turma: id } })
+        if(agendamentos > 0){
+            return res.status(409).json({
+                message: 'Esta turma possui agendamentos e não pode ser excluída.'
             })
         }
         await Turma.destroy()
@@ -122,23 +246,37 @@ const DeleteTurma = async (req,res) => { // funções que alteram o banco nesse 
 
 const novoLocal = async (req,res) => {
     const {nome} = req.body
-    if(!nome){
-        return res.status(400).json(`todos os campos são obrigatórios`)
+    if(!nome || !nome.trim()){
+        return res.status(400).json({
+            message: 'Todos os campos são obrigatórios'
+        })
     }
     try {
-        const novoLocal = await local.create({
-            nome
+        const existente = await local.findOne({ where: { nome: nome.trim() } })
+        if(existente){
+            return res.status(409).json({
+                message: 'Já existe um local com este nome.'
+            })
+        }
+        await local.create({
+            nome: nome.trim()
+        })
+        return res.status(201).json({
+            message: 'Local criado com sucesso.'
         })
     } catch (error) {
-        return res.status(500).json(`erro ao tentar criar novo local, ${error}`)
+        console.error(error)
+        return res.status(500).json({
+            message: 'Erro ao tentar criar novo local.'
+        })
     }
 }
 
 const editLocal = async (req,res) => {
     try {
         const {id} = req.params
-        const {nome} = req.body //tem que mudar o metodo http para patch
-        if(!id||!nome){
+        const {nome} = req.body
+        if(!id||!nome || !nome.trim()){
             return res.status(400).json({
                 message:'Todos os campos são obrigatórios.'
             })
@@ -149,7 +287,13 @@ const editLocal = async (req,res) => {
                 message:'Local não encontrado.'
             })
         }
-        await Local.update({nome:nome})
+        const existente = await local.findOne({ where: { nome: nome.trim() } })
+        if(existente && existente.id !== Local.id){
+            return res.status(409).json({
+                message: 'Já existe um local com este nome.'
+            })
+        }
+        await Local.update({nome:nome.trim()})
         return res.status(200).json({
             message:'Local editado com sucesso.'
         })
@@ -162,7 +306,7 @@ const editLocal = async (req,res) => {
 }
 const DeleteLocal = async (req,res) => {
     try {
-        const {id} = req.body //trocar para metodo patch
+        const id = req.params.id ?? req.body.id
         if(!id){
             return res.status(400).json({
                 message:'id do local não fornecido.'
@@ -172,6 +316,12 @@ const DeleteLocal = async (req,res) => {
         if(!Local){
             return res.status(400).json({
                 message:'este id não pertence a nenhum local.'
+            })
+        }
+        const agendamentos = await Agendamento.count({ where: { local_id: id } })
+        if(agendamentos > 0){
+            return res.status(409).json({
+                message: 'Este local possui agendamentos e não pode ser excluído.'
             })
         }
         await Local.destroy()
@@ -186,5 +336,59 @@ const DeleteLocal = async (req,res) => {
     }
 }
 
+const consultarCapacidade = async (req,res) => {
+    try {
+        const [configuracao] = await Capacidade.findOrCreate({
+            where: { id: 1 },
+            defaults: { estoque_total: ESTOQUE_TOTAL }
+        })
+        return res.status(200).json({
+            estoque_total: Number(configuracao.estoque_total)
+        })
+    } catch (error) {
+        console.error(error)
+        return res.status(500).json({
+            message: 'Erro ao tentar consultar a capacidade.'
+        })
+    }
+}
 
-module.exports = {createNewUsuario, novaTurma, editTurma, DeleteTurma, novoLocal, editLocal, DeleteLocal}
+const alterarCapacidade = async (req,res) => {
+    try {
+        const estoque_total = Number(req.body.estoque_total)
+        if(!Number.isInteger(estoque_total) || estoque_total < 1){
+            return res.status(400).json({
+                message: 'A capacidade deve ser um número inteiro maior que zero.'
+            })
+        }
+        const [configuracao] = await Capacidade.findOrCreate({
+            where: { id: 1 },
+            defaults: { estoque_total }
+        })
+        await configuracao.update({ estoque_total })
+        return res.status(200).json({
+            message: 'Capacidade alterada com sucesso.',
+            estoque_total
+        })
+    } catch (error) {
+        console.error(error)
+        return res.status(500).json({
+            message: 'Erro ao tentar alterar a capacidade.'
+        })
+    }
+}
+
+
+module.exports = {
+    createNewUsuario,
+    editUsuario,
+    DeleteUsuario,
+    novaTurma,
+    editTurma,
+    DeleteTurma,
+    novoLocal,
+    editLocal,
+    DeleteLocal,
+    consultarCapacidade,
+    alterarCapacidade
+}

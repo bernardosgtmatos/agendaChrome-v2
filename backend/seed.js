@@ -1,7 +1,8 @@
 require('dotenv').config()
 const sequelize = require('./src/config/Database')
 
-const {Admin,horario_retirada,horarios_devolução,Turmas,local, Usuario} = require('./src/model/index')
+const {Admin,Capacidade,horario_retirada,horarios_devolução,Turmas,local, Usuario} = require('./src/model/index')
+const { ESTOQUE_TOTAL } = require('./src/config/estoque')
 
 // >>> EDITE AQUI <<<
 // seed de desenvolvimento, rode com: node seed.js
@@ -11,6 +12,20 @@ const ADMIN_PADRAO = {
     nome: 'Administrador',
     email: 'admin@gmail.com',
     senha: '1234' // senha de dev, o beforeCreate do model gera o hash bcrypt
+}
+
+const COORDENADOR_PADRAO = {
+    nome: 'Coordenador',
+    email: 'coordenador@escola.com',
+    senha: '1234',
+    perfil: 'Coordenador'
+}
+
+const PROFESSOR_PADRAO = {
+    nome: 'Professor Exemplo',
+    email: 'professor@escola.com',
+    senha: '1234',
+    perfil: 'Professor'
 }
 
 const TURMAS = [
@@ -73,18 +88,35 @@ const seed = async () => {
             await Admin.create(ADMIN_PADRAO)
             console.log(`admin: ${ADMIN_PADRAO.email} criado com a senha "${ADMIN_PADRAO.senha}"`)
         }
-        const ExistUser = await Usuario.findOne({where:{email : 'testUser@gmail.com'}})
-        if(!ExistUser){
+        const usuariosSeed = [
+            { nome: 'Usuario_teste', email: 'testUser@gmail.com', senha: '1234', perfil: 'Professor' },
+            COORDENADOR_PADRAO,
+            PROFESSOR_PADRAO,
+        ]
+        for (const dados of usuariosSeed) {
+            const existente = await Usuario.findOne({ where: { email: dados.email } })
+            if (existente) {
+                if (existente.perfil !== dados.perfil) {
+                    await existente.update({ perfil: dados.perfil })
+                    console.log(`usuário: ${dados.email} atualizado para perfil ${dados.perfil}`)
+                } else {
+                    console.log(`usuário: ${dados.email} já existe, pulando`)
+                }
+                continue
+            }
             try {
-                const UserSeed = await Usuario.create({
-                    nome: 'Usuario_teste',
-                    email: 'testUser@gmail.com',
-                    senha: '1234'
-                })
+                await Usuario.create(dados)
+                console.log(`usuário: ${dados.email} criado com o perfil ${dados.perfil}`)
             } catch (error) {
                 console.log(`erro ao tentar criar usuario seed, ${error}`)
             }
         }
+
+        const [capacidade] = await Capacidade.findOrCreate({
+            where: { id: 1 },
+            defaults: { estoque_total: ESTOQUE_TOTAL }
+        })
+        console.log(`capacidade: ${capacidade.estoque_total} chromebooks`)
 
         console.log('horários de retirada:')
         await criarSeNaoExistir(horario_retirada, 'horario_retirada', HORARIOS.map((horario) => horario.inicio), 'horários de retirada', 'HORARIOS')

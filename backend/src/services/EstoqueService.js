@@ -11,8 +11,19 @@
 const { ESTOQUE_TOTAL } = require('../config/estoque');
 const { horario_retirada, horarios_devolução } = require('../model/HorariosModel');
 const Agendamento = require('../model/AgendamentoModel');
+const Capacidade = require('../model/CapacidadeModel');
 
 const STATUS_OCUPANTES = ['Pendente', 'Em progresso', 'Finalizado'];
+
+async function getCapacidade(opts = {}) {
+  const [configuracao] = await Capacidade.findOrCreate({
+    where: { id: 1 },
+    defaults: { estoque_total: ESTOQUE_TOTAL },
+    transaction: opts.transaction || undefined,
+  });
+  const total = Number(configuracao.estoque_total);
+  return Number.isInteger(total) && total > 0 ? total : ESTOQUE_TOTAL;
+}
 
 async function resolveIntervalo(data_retirada, data_devolucao) {
   const [ret, dev] = await Promise.all([
@@ -42,6 +53,7 @@ async function resolveIntervalo(data_retirada, data_devolucao) {
 
 async function getOcupacao(date, data_retirada, data_devolucao, opts = {}) {
   const { retT, devT } = await resolveIntervalo(data_retirada, data_devolucao);
+  const total = await getCapacidade(opts);
 
   const [rets, devs, ags] = await Promise.all([
     horario_retirada.findAll({ transaction: opts.transaction || undefined }),
@@ -65,9 +77,9 @@ async function getOcupacao(date, data_retirada, data_devolucao, opts = {}) {
   }
 
   return {
-    total: ESTOQUE_TOTAL,
+    total,
     ocupado,
-    disponivel: ESTOQUE_TOTAL - ocupado,
+    disponivel: Math.max(0, total - ocupado),
     retirada: retT,
     devolucao: devT,
   };
@@ -139,4 +151,4 @@ async function checkLocalLivre(date, local_id, data_retirada, data_devolucao, op
   return info;
 }
 
-module.exports = { ESTOQUE_TOTAL, STATUS_OCUPANTES, getOcupacao, checkDisponibilidade, resolveIntervalo, getOcupacaoLocal, checkLocalLivre };
+module.exports = { ESTOQUE_TOTAL, STATUS_OCUPANTES, getCapacidade, getOcupacao, checkDisponibilidade, resolveIntervalo, getOcupacaoLocal, checkLocalLivre };

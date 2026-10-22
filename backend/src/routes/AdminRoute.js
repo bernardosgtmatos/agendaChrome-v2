@@ -1,16 +1,42 @@
 const express = require('express')
-const { createAdminUser, createNewUsuario, novaTurma, editTurma, DeleteTurma } = require('../controllers/AdminController')
-
+const {
+    createNewUsuario,
+    editUsuario,
+    DeleteUsuario,
+    novaTurma,
+    editTurma,
+    DeleteTurma,
+    novoLocal,
+    editLocal,
+    DeleteLocal,
+    consultarCapacidade,
+    alterarCapacidade,
+} = require('../controllers/AdminController')
+const auth = require('../middleware/Authorization')
+const adminAuth = require('../middleware/AdminAuthorization')
 
 const AdminRoute = express()
 
-//aplicar o middleware auth dpsss emm
+AdminRoute.use(auth, adminAuth)
 
-
-// AdminRoute.post('/newadmin', createAdminUser)
+AdminRoute.post('/usuarios', createNewUsuario)
 AdminRoute.post('/newuser', createNewUsuario)
+AdminRoute.patch('/usuarios/:id', editUsuario)
+AdminRoute.delete('/usuarios/:id', DeleteUsuario)
+
+AdminRoute.post('/turmas', novaTurma)
 AdminRoute.post('/NovaTurma', novaTurma)
-AdminRoute.patch('/EditTurma:id', editTurma) // trocar para metodo patch
-AdminRoute.post('/DeleteTurma', DeleteTurma) // trocar para metodo patch
+AdminRoute.patch('/turmas/:id', editTurma)
+AdminRoute.patch('/EditTurma/:id', editTurma)
+AdminRoute.delete('/turmas/:id', DeleteTurma)
+AdminRoute.delete('/DeleteTurma/:id', DeleteTurma)
+AdminRoute.post('/DeleteTurma', DeleteTurma)
+
+AdminRoute.post('/locais', novoLocal)
+AdminRoute.patch('/locais/:id', editLocal)
+AdminRoute.delete('/locais/:id', DeleteLocal)
+
+AdminRoute.get('/capacidade', consultarCapacidade)
+AdminRoute.patch('/capacidade', alterarCapacidade)
 
 module.exports = AdminRoute

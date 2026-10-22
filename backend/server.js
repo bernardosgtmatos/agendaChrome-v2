@@ -35,13 +35,20 @@ const databaseSYNC = async () => {
         await sequelize.authenticate()
         await sequelize.sync({})
     } catch (error) {
-        return console.error(`'erro no authenticate do sequelize no arquivo serve.js, ${error}`)
+        console.error(`'erro no authenticate do sequelize no arquivo server.js, ${error}`)
+        throw error
     }
-
 }
 
-//listen
-app.listen(port, () =>{
-    databaseSYNC()
-    console.log(`server rodando na porta ${port}`);
-})
+const iniciar = async () => {
+    try {
+        await databaseSYNC()
+        app.listen(port, () => {
+            console.log(`server rodando na porta ${port}`);
+        })
+    } catch {
+        process.exitCode = 1
+    }
+}
+
+iniciar()

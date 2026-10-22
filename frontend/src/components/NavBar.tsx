@@ -47,6 +47,11 @@ function NavBar() {
           <NavLink to="/agendamentos" className="navbar__link">
             Agendamentos
           </NavLink>
+          {usuario?.perfil === 'Coordenador' && (
+            <NavLink to="/gerenciamento" className="navbar__link">
+              Gerenciar
+            </NavLink>
+          )}
         </div>
 
         <div className="navbar__usuario">

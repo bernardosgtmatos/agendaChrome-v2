@@ -49,6 +49,7 @@ const me = async (req, res) => {
             id: user.id,
             nome: user.nome,
             email: user.email,
+            perfil: user.perfil,
         })
     } catch (error) {
         console.error(error)

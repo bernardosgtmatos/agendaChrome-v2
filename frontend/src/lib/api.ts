@@ -22,26 +22,48 @@ export async function getJson<T>(caminho: string): Promise<T> {
   return (await resposta.json()) as T
 }
 
-export async function postJson<T>(caminho: string, corpo: unknown): Promise<T> {
+async function enviarJson<T>(
+  caminho: string,
+  metodo: 'POST' | 'PATCH' | 'DELETE',
+  corpo?: unknown,
+): Promise<T> {
   const resposta = await fetch(`${API_BASE}/${caminho}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    method: metodo,
+    headers: corpo === undefined ? undefined : { 'Content-Type': 'application/json' },
     credentials: 'include',
-    body: JSON.stringify(corpo),
+    body: corpo === undefined ? undefined : JSON.stringify(corpo),
   })
-  const dados = (await resposta.json().catch(() => null)) as T | null
+  const dados = (await resposta.json().catch(() => null)) as T | { message?: string } | null
   if (!resposta.ok) {
-    throw new Error(
-      (dados as { message?: string } | null)?.message ?? `a API respondeu ${resposta.status}`,
-    )
+    const mensagem =
+      typeof dados === 'string'
+        ? dados
+        : (dados as { message?: string } | null)?.message ??
+          `a API respondeu ${resposta.status}`
+    throw new Error(mensagem)
   }
   return dados as T
 }
+
+export async function postJson<T>(caminho: string, corpo: unknown): Promise<T> {
+  return enviarJson<T>(caminho, 'POST', corpo)
+}
+
+export async function patchJson<T>(caminho: string, corpo: unknown): Promise<T> {
+  return enviarJson<T>(caminho, 'PATCH', corpo)
+}
+
+export async function deleteJson<T>(caminho: string): Promise<T> {
+  return enviarJson<T>(caminho, 'DELETE')
+}
+
+export type Perfil = 'Coordenador' | 'Professor'
 
 export type UsuarioSessao = {
   id: string
   nome: string
   email: string
+  perfil: Perfil
 }
 
 export async function loginApi(email: string, senha: string): Promise<void> {

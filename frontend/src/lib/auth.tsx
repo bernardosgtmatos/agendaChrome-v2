@@ -30,7 +30,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUsuario(sessao)
     } catch {
       // /me pode ainda não existir em backends antigos: mantém sessão otimista
-      setUsuario((atual: UsuarioSessao | null) => atual ?? { id: 'sessao', nome: email, email })
+      setUsuario((atual: UsuarioSessao | null) =>
+        atual ?? { id: 'sessao', nome: email, email, perfil: 'Professor' },
+      )
     }
   }, [])
 

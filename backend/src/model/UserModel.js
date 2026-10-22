@@ -25,6 +25,14 @@ const Usuario = sequelize.define('Usuario',{
         type: DataTypes.STRING,
         allowNull: false
     },
+    perfil:{
+        type: DataTypes.STRING,
+        allowNull: false,
+        defaultValue: 'Professor',
+        validate:{
+            isIn: [['Coordenador', 'Professor']]
+        }
+    },
 },{
     defaultScope:{
         attributes: {exclude: ['senha']}

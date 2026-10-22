@@ -1,5 +1,6 @@
 const Agendamento = require('./AgendamentoModel')
 const Admin = require('./AdminModel')
+const Capacidade = require('./CapacidadeModel')
 const {horario_retirada, horarios_devolução} = require('./HorariosModel')
 const local = require('./LocalModel')
 const Turmas = require('./TurmasModel')
@@ -20,4 +21,4 @@ Agendamento.belongsTo(Turmas,{foreignKey:'turma'})
 local.hasMany(Agendamento,{foreignKey:'local_id'})
 Agendamento.belongsTo(local,{foreignKey:'local_id'})
 
-module.exports = {Agendamento,Admin,horario_retirada,horarios_devolução,local,Turmas,Usuario}
+module.exports = {Agendamento,Admin,Capacidade,horario_retirada,horarios_devolução,local,Turmas,Usuario}
