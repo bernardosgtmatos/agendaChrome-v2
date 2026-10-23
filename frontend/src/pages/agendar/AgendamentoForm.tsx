@@ -1,6 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import UserBar from '../../components/UserBar.tsx'
 import { getJson, postJson } from '../../lib/api.ts'
 import './AgendamentoForm.css'
 
@@ -477,7 +476,6 @@ function AgendamentoForm() {
     <main className="agendar">
       <header className="agendar-topo">
         <h1>AgendaChrome</h1>
-        <UserBar />
       </header>
 
       <div className="agendar-barra">

@@ -1,11 +1,12 @@
 .agendamento-lista {
   --lista-bg: #e8f0f7;
-  --lista-card: rgba(255, 255, 255, 0.5);
+  --lista-card: rgba(255, 255, 255, 0.55);
   --lista-stroke: #1f6e8c;
   --lista-ink: #111;
   --lista-btn: #8fc9e4;
+  --lista-btn-sec: #cfe8f3;
   margin: 0 auto 80px;
-  padding: 28px 33px;
+  padding: 28px 33px 80px;
   max-width: 1381px;
   box-sizing: border-box;
   text-align: left;
@@ -51,32 +52,86 @@
   border-radius: 21px;
 }
 
-.agendamento-lista__rolagem {
-  background: var(--lista-card);
-  border-radius: 30px;
-  padding: 18px 20px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
-  box-sizing: border-box;
-  min-width: 0;
+.agendamento-lista__grupos {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
-.agendamento-lista__tabela {
+.agendamento-grupo {
+  background: var(--lista-card);
+  border: 1px solid var(--lista-stroke);
+  border-radius: 21px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.agendamento-grupo__cabecalho {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border: 0;
+  background: transparent;
+  color: var(--lista-ink);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+}
+
+.agendamento-grupo__cabecalho:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.agendamento-grupo__data {
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.agendamento-grupo__contagem {
+  font-size: 13px;
+  font-weight: 500;
+  opacity: 0.75;
+}
+
+.agendamento-grupo__icone {
+  margin-left: auto;
+  font-size: 20px;
+  line-height: 1;
+  font-weight: 700;
+}
+
+.agendamento-grupo__painel {
+  padding: 0 12px 14px;
+}
+
+.agendamento-grupo__rolagem {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.agendamento-grupo__tabela {
   width: 100%;
   border-collapse: separate;
-  border-spacing: 0 10px;
+  border-spacing: 0 8px;
   font-size: 14px;
   table-layout: fixed;
+  min-width: 900px;
 }
 
-.agendamento-lista__tabela th,
-.agendamento-lista__tabela td {
-  padding: 10px 12px;
+.agendamento-grupo__tabela th,
+.agendamento-grupo__tabela td {
+  padding: 8px 10px;
   text-align: left;
-  vertical-align: top;
+  vertical-align: middle;
   overflow-wrap: anywhere;
 }
 
-.agendamento-lista__tabela th {
+.agendamento-grupo__tabela th {
   font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
@@ -85,28 +140,153 @@
   white-space: nowrap;
 }
 
-.agendamento-lista__tabela tbody td {
+.agendamento-grupo__tabela tbody td {
   background: #fff;
   border-top: 1px solid var(--lista-stroke);
   border-bottom: 1px solid var(--lista-stroke);
 }
 
-.agendamento-lista__tabela tbody td:first-child {
+/* .agendamento-grupo__tabela tbody td:first-child {
   border-left: 1px solid var(--lista-stroke);
-  border-radius: 14px 0 0 14px;
+  border-radius: 12px 0 0 12px;
 }
 
-.agendamento-lista__tabela tbody td:last-child {
+.agendamento-grupo__tabela tbody td:last-child {
   border-right: 1px solid var(--lista-stroke);
-  border-radius: 0 14px 14px 0;
+  border-radius: 0 12px 12px 0;
+} */
+
+.agendamento-grupo__solicitante {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--lista-btn-sec);
+  color: var(--lista-ink);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.agendamento-lista__tabela tbody button {
+.agendamento-grupo__obs {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  background: transparent;
+  color: #1665bd;
   font: inherit;
-  font-size: 14px;
+  font-size: 13px;
+  cursor: pointer;
+  text-align: left;
+  padding: 0;
+  max-width: 100%;
+}
+
+.agendamento-grupo__obs:hover {
+  text-decoration: underline;
+}
+
+.agendamento-grupo__obs-ver {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  opacity: 0.7;
+  white-space: nowrap;
+}
+
+.agendamento-obs-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 20px;
+  background: rgba(7, 61, 83, 0.24);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.agendamento-obs-modal__card {
+  width: min(480px, 100%);
+  max-height: calc(100svh - 40px);
+  box-sizing: border-box;
+  padding: 22px 24px 24px;
+  overflow-y: auto;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 24px;
+  background: #f0f6fd;
+  box-shadow: 0 16px 40px rgba(7, 61, 83, 0.28);
+}
+
+.agendamento-obs-modal__cabecalho {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+.agendamento-obs-modal__cabecalho h2 {
+  margin: 0;
+  color: var(--lista-ink);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.agendamento-obs-modal__fechar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--lista-stroke);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.65);
+  color: var(--lista-ink);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.agendamento-obs-modal__texto {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--lista-ink);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.agendamento-grupo__status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--lista-btn-sec);
+  color: var(--lista-ink);
+  font-size: 12px;
   font-weight: 600;
-  min-height: 44px;
-  padding: 10px 18px;
+  white-space: nowrap;
+}
+
+.agendamento-grupo__status--cancelado {
+  background: #f4a9a9;
+}
+
+.agendamento-grupo__cancelar {
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  min-height: 36px;
+  padding: 6px 14px;
   border-radius: 999px;
   border: 1px solid var(--lista-stroke);
   background: var(--lista-btn);
@@ -115,14 +295,9 @@
   white-space: nowrap;
 }
 
-.agendamento-lista__tabela tbody button:disabled {
+.agendamento-grupo__cancelar:disabled {
   opacity: 0.6;
   cursor: wait;
-}
-
-.agendamento-lista__protocolo {
-  font-family: ui-monospace, Consolas, monospace;
-  font-size: 13px;
 }
 
 .agendamento-lista__paginacao {
@@ -131,7 +306,7 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 16px;
-  margin-top: 18px;
+  margin-top: 24px;
 }
 
 .agendamento-lista__paginacao button {
@@ -164,82 +339,32 @@
     padding: 20px 16px 48px;
   }
 
-  .agendamento-lista__rolagem {
-    border-radius: 24px;
-    padding: 14px 12px;
+  .agendamento-grupo__cabecalho {
+    padding: 12px 14px;
+    font-size: 15px;
   }
 
-  .agendamento-lista__tabela,
-  .agendamento-lista__tabela tbody,
-  .agendamento-lista__tabela tr,
-  .agendamento-lista__tabela td {
-    display: block;
-    width: 100%;
-    box-sizing: border-box;
+  .agendamento-grupo__data {
+    font-size: 15px;
   }
 
-  .agendamento-lista__tabela {
-    border-spacing: 0;
+  .agendamento-grupo__tabela {
+    min-width: 760px;
+    font-size: 13px;
   }
 
-  .agendamento-lista__tabela thead {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
+  .agendamento-grupo__tabela th,
+  .agendamento-grupo__tabela td {
+    padding: 6px 8px;
   }
 
-  .agendamento-lista__tabela tbody tr {
-    background: #fff;
-    border: 1px solid var(--lista-stroke);
-    border-radius: 21px;
-    padding: 14px 16px;
-    margin-bottom: 12px;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px 14px;
+  .agendamento-lista__paginacao {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
   }
 
-  .agendamento-lista__tabela tbody td {
-    border: 0;
-    border-radius: 0;
-    background: transparent;
-    padding: 0;
-    font-size: 14px;
-    min-width: 0;
-  }
-
-  .agendamento-lista__tabela tbody td::before {
-    display: block;
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-    opacity: 0.65;
-    margin-bottom: 2px;
-  }
-
-  .agendamento-lista__tabela tbody td:nth-child(1)::before { content: 'Protocolo'; }
-  .agendamento-lista__tabela tbody td:nth-child(2)::before { content: 'Data'; }
-  .agendamento-lista__tabela tbody td:nth-child(3)::before { content: 'Retirada'; }
-  .agendamento-lista__tabela tbody td:nth-child(4)::before { content: 'Devolução'; }
-  .agendamento-lista__tabela tbody td:nth-child(5)::before { content: 'Quantidade'; }
-  .agendamento-lista__tabela tbody td:nth-child(6)::before { content: 'Turma'; }
-  .agendamento-lista__tabela tbody td:nth-child(7)::before { content: 'Local'; }
-  .agendamento-lista__tabela tbody td:nth-child(8)::before { content: 'Solicitante'; }
-  .agendamento-lista__tabela tbody td:nth-child(9)::before { content: 'Observação'; }
-  .agendamento-lista__tabela tbody td:nth-child(10)::before { content: 'Status'; }
-  .agendamento-lista__tabela tbody td:nth-child(11)::before { content: 'Ações'; }
-
-  .agendamento-lista__tabela tbody td:nth-child(1),
-  .agendamento-lista__tabela tbody td:nth-child(8),
-  .agendamento-lista__tabela tbody td:nth-child(9),
-  .agendamento-lista__tabela tbody td:nth-child(11) {
-    grid-column: 1 / -1;
-  }
-
-  .agendamento-lista__tabela tbody button {
+  .agendamento-lista__paginacao button {
     width: 100%;
     min-height: 48px;
   }

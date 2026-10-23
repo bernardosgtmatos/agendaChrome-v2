@@ -1,6 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
-import UserBar from '../../components/UserBar.tsx'
 import { deleteJson, getJson, patchJson, postJson, type Perfil } from '../../lib/api.ts'
 import { useAuth } from '../../lib/useAuth.ts'
 import './Gerenciamento.css'
@@ -391,7 +390,6 @@ function Gerenciamento() {
           <IconeVoltar />
           Voltar
         </button>
-        <UserBar />
       </header>
 
       {aviso && (

@@ -6,6 +6,7 @@ import AgendamentoListagem from './pages/agendamentos/AgendamentoListagem.tsx'
 import Gerenciamento from './pages/gerenciamento/Gerenciamento.tsx'
 import Login from './pages/login/Login.tsx'
 import RecuperarSenha from './pages/recuperar-senha/RecuperarSenha.tsx'
+import UserBar from './components/UserBar.tsx'
 import './App.css'
 
 function Layout() {
@@ -13,6 +14,9 @@ function Layout() {
   const semNavBar = location.pathname === '/agendar' || location.pathname === '/gerenciamento'
   return (
     <>
+      <div className="user-bar-spacer">
+        <UserBar />
+      </div>
       {!semNavBar && <NavBar />}
       <Outlet />
     </>

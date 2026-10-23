@@ -14,12 +14,12 @@
   font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
   color: var(--ger-ink);
   background:
-    radial-gradient(ellipse 420px 360px at -6% -4%, rgba(143, 194, 217, 0.9), transparent 68%),
-    radial-gradient(ellipse 780px 520px at 8% 108%, rgba(194, 228, 243, 0.95), transparent 68%),
+    /* radial-gradient(ellipse 420px 360px at -6% -4%, rgba(143, 194, 217, 0.9), transparent 68%),
+    radial-gradient(ellipse 780px 520px at 8% 108%, rgba(194, 228, 243, 0.95), transparent 68%), */
     var(--ger-bg);
 }
 
-.gerenciamento__topo {
+ .gerenciamento__topo {
   width: min(1332px, calc(100% - 64px));
   margin: 0 auto;
   padding: 8px 0 33px;

@@ -99,6 +99,8 @@ function AgendamentoListagem() {
   const [carregandoPagina, setCarregandoPagina] = useState(true)
   const [erroCarregamento, setErroCarregamento] = useState<string | null>(null)
   const [cancelandoId, setCancelandoId] = useState<string | null>(null)
+  const [gruposFechados, setGruposFechados] = useState<Set<string>>(new Set())
+  const [observacaoModal, setObservacaoModal] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelado = false
@@ -199,7 +201,7 @@ function AgendamentoListagem() {
   }
 
   const rotulos = {
-    usuarios: indexar(referencias.usuarios, (usuario) => `${usuario.nome} (${usuario.email})`),
+    usuarios: indexar(referencias.usuarios, (usuario) => usuario.nome),
     turmas: indexar(referencias.turmas, (turma) => turma.serie),
     locais: indexar(referencias.locais, (item) => item.nome),
     retirada: indexar(referencias.retirada, (horario) => horario.horario_retirada),
@@ -213,6 +215,7 @@ function AgendamentoListagem() {
     return {
       id: agendamento.id,
       protocolo: agendamento.id.slice(0, 8),
+      dataIso: agendamento.date,
       data: formatarData(agendamento.date),
       retirada: rotuloDe(rotulos.retirada, agendamento.data_retirada),
       devolucao: rotuloDe(rotulos.devolucao, agendamento.data_devolucao),
@@ -225,6 +228,34 @@ function AgendamentoListagem() {
       cancelado: agendamento.status === 'Cancelado',
     }
   })
+
+  const grupos = Array.from(
+    linhas.reduce((mapa, linha) => {
+      if (!mapa.has(linha.dataIso)) mapa.set(linha.dataIso, [])
+      mapa.get(linha.dataIso)!.push(linha)
+      return mapa
+    }, new Map<string, typeof linhas>()),
+  )
+    .map(([iso, itens]) => ({ iso, data: formatarData(iso), itens }))
+    .sort((a, b) => b.iso.localeCompare(a.iso))
+
+  function alternarGrupo(iso: string) {
+    setGruposFechados((atual) => {
+      const proximo = new Set(atual)
+      if (proximo.has(iso)) proximo.delete(iso)
+      else proximo.add(iso)
+      return proximo
+    })
+  }
+
+  useEffect(() => {
+    if (!observacaoModal) return
+    function aoTeclar(evento: KeyboardEvent) {
+      if (evento.key === 'Escape') setObservacaoModal(null)
+    }
+    document.addEventListener('keydown', aoTeclar)
+    return () => document.removeEventListener('keydown', aoTeclar)
+  }, [observacaoModal])
 
   if (carregandoReferencias || (carregandoPagina && agendamentos.length === 0)) {
     return <p className="agendamento-lista__aviso">Carregando agendamentos...</p>
@@ -249,53 +280,138 @@ function AgendamentoListagem() {
           Nenhum agendamento registrado ainda. Crie o primeiro em <strong>Novo agendamento</strong>.
         </p>
       ) : (
-        <div className="agendamento-lista__rolagem">
-          <table className="agendamento-lista__tabela">
-            <thead>
-              <tr>
-                <th scope="col">Protocolo</th>
-                <th scope="col">Data</th>
-                <th scope="col">Retirada</th>
-                <th scope="col">Devolução</th>
-                <th scope="col">Quantidade</th>
-                <th scope="col">Turma</th>
-                <th scope="col">Local</th>
-                <th scope="col">Solicitante</th>
-                <th scope="col">Observação</th>
-                <th scope="col">Status</th>
-                <th scope="col">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {linhas.map((linha) => (
-                <tr key={linha.id}>
-                  <td className="agendamento-lista__protocolo" title={linha.id}>
-                    {linha.protocolo}
-                  </td>
-                  <td>{linha.data}</td>
-                  <td>{linha.retirada}</td>
-                  <td>{linha.devolucao}</td>
-                  <td>{linha.quantidade}</td>
-                  <td>{linha.turma}</td>
-                  <td>{linha.local}</td>
-                  <td>{linha.solicitante}</td>
-                  <td>{linha.observacao}</td>
-                  <td>{linha.status}</td>
-                  <td>
-                    {!linha.cancelado && (
-                      <button
-                        type="button"
-                        disabled={cancelandoId === linha.id || carregandoPagina}
-                        onClick={() => cancelar(linha.id)}
-                      >
-                        {cancelandoId === linha.id ? 'Cancelando…' : 'Cancelar'}
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="agendamento-lista__grupos">
+          {grupos.map((grupo) => {
+            const aberto = !gruposFechados.has(grupo.iso)
+            return (
+              <section key={grupo.iso} className="agendamento-grupo">
+                <button
+                  type="button"
+                  className="agendamento-grupo__cabecalho"
+                  aria-expanded={aberto}
+                  onClick={() => alternarGrupo(grupo.iso)}
+                >
+                  <span className="agendamento-grupo__data">{grupo.data}</span>
+                  <span className="agendamento-grupo__contagem">
+                    {grupo.itens.length === 1
+                      ? '1 agendamento'
+                      : `${grupo.itens.length} agendamentos`}
+                  </span>
+                  <span className="agendamento-grupo__icone" aria-hidden="true">
+                    {aberto ? '−' : '+'}
+                  </span>
+                </button>
+
+                {aberto && (
+                  <div className="agendamento-grupo__painel">
+                    <div className="agendamento-grupo__rolagem">
+                      <table className="agendamento-grupo__tabela">
+                        <thead>
+                          <tr>
+                            <th scope="col">Solicitante</th>
+                            <th scope="col">Quantidade</th>
+                            <th scope="col">Turma</th>
+                            <th scope="col">Retirada</th>
+                            <th scope="col">Devolução</th>
+                            <th scope="col">Local</th>
+                            <th scope="col">Observação</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Ações</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {grupo.itens.map((linha) => (
+                            <tr key={linha.id}>
+                              <td>
+                                <span className="agendamento-grupo__solicitante">
+                                  {linha.solicitante}
+                                </span>
+                              </td>
+                              <td>{linha.quantidade}</td>
+                              <td>{linha.turma}</td>
+                              <td>{linha.retirada}</td>
+                              <td>{linha.devolucao}</td>
+                              <td>{linha.local}</td>
+                              <td>
+                                {linha.observacao === VAZIO ? (
+                                  VAZIO
+                                ) : (
+                                  <button
+                                    type="button"
+                                    className="agendamento-grupo__obs"
+                                    onClick={() => setObservacaoModal(linha.observacao)}
+                                    title={linha.observacao}
+                                  >
+                                    {linha.observacao.length > 28
+                                      ? `${linha.observacao.slice(0, 28)}…`
+                                      : linha.observacao}
+                                    <span className="agendamento-grupo__obs-ver">ver mais</span>
+                                  </button>
+                                )}
+                              </td>
+                              <td>
+                                <span
+                                  className={`agendamento-grupo__status${
+                                    linha.cancelado
+                                      ? ' agendamento-grupo__status--cancelado'
+                                      : ''
+                                  }`}
+                                >
+                                  {linha.status}
+                                </span>
+                              </td>
+                              <td>
+                                {!linha.cancelado && (
+                                  <button
+                                    type="button"
+                                    className="agendamento-grupo__cancelar"
+                                    disabled={cancelandoId === linha.id || carregandoPagina}
+                                    onClick={() => cancelar(linha.id)}
+                                  >
+                                    {cancelandoId === linha.id ? 'Cancelando…' : 'Cancelar'}
+                                  </button>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </section>
+            )
+          })}
+        </div>
+      )}
+
+      {observacaoModal && (
+        <div
+          className="agendamento-obs-modal"
+          role="presentation"
+          onMouseDown={(evento) => {
+            if (evento.target === evento.currentTarget) setObservacaoModal(null)
+          }}
+        >
+          <div
+            className="agendamento-obs-modal__card"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="agendamento-obs-titulo"
+          >
+            <div className="agendamento-obs-modal__cabecalho">
+              <h2 id="agendamento-obs-titulo">Observação</h2>
+              <button
+                type="button"
+                className="agendamento-obs-modal__fechar"
+                onClick={() => setObservacaoModal(null)}
+                aria-label="Fechar"
+              >
+                ×
+              </button>
+            </div>
+            <p className="agendamento-obs-modal__texto">{observacaoModal}</p>
+          </div>
         </div>
       )}
 
