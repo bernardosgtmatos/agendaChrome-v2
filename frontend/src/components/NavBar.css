@@ -1,4 +1,5 @@
 .navbar-shell {
+  position: relative;
   background: #e3effb;
   padding: 24px 33px 0;
   box-sizing: border-box;

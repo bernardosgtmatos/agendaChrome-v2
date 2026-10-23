@@ -23,6 +23,9 @@
   width: min(1332px, calc(100% - 64px));
   margin: 0 auto;
   padding: 8px 0 33px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .gerenciamento__voltar {

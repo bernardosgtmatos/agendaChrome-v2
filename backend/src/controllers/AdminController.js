@@ -1,5 +1,6 @@
-const {Agendamento,Capacidade,Turmas,local,Usuario} = require('../model/index.js')
+const {Agendamento,Capacidade,RecuperacaoSenha,Turmas,local,Usuario} = require('../model/index.js')
 const { ESTOQUE_TOTAL } = require('../config/estoque.js')
+const { assinarToken, definirCookieToken } = require('../services/TokenService')
 
 const PERFIS = ['Coordenador', 'Professor']
 
@@ -97,9 +98,15 @@ const editUsuario = async (req, res) => {
             if(!email.trim()) return res.status(400).json({ message: 'O email não pode ficar vazio.' })
             dados.email = email.trim()
         }
-        if(senha) dados.senha = senha
+        if(senha) {
+            dados.senha = senha
+            dados.token_version = usuario.token_version + 1
+        }
 
         await usuario.update(dados)
+        if (senha && usuario.id === req.user.id) {
+            definirCookieToken(res, assinarToken(usuario))
+        }
         return res.status(200).json({
             message: 'Usuário atualizado com sucesso.'
         })
@@ -136,6 +143,7 @@ const DeleteUsuario = async (req, res) => {
                 message: 'Este usuário possui agendamentos e não pode ser excluído.'
             })
         }
+        await RecuperacaoSenha.destroy({ where: { usuario_id: id } })
         await usuario.destroy()
         return res.status(200).json({
             message: 'Usuário excluído com sucesso.'

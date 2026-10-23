@@ -23,6 +23,7 @@ const AdminRoute = require('./src/routes/AdminRoute.js')
 const sequelize = require('./src/config/Database.js')
 const UserRoute = require('./src/routes/UserRoute.js')
 const EventRoute = require('./src/routes/EventsRoute.js')
+const { registrarStatusEmail } = require('./src/services/EmailService.js')
 
 
 //rotas
@@ -35,7 +36,7 @@ const databaseSYNC = async () => {
         await sequelize.authenticate()
         await sequelize.sync({})
     } catch (error) {
-        console.error(`'erro no authenticate do sequelize no arquivo server.js, ${error}`)
+        console.error('Erro ao preparar o banco no arquivo server.js:', error.message)
         throw error
     }
 }
@@ -43,6 +44,7 @@ const databaseSYNC = async () => {
 const iniciar = async () => {
     try {
         await databaseSYNC()
+        registrarStatusEmail()
         app.listen(port, () => {
             console.log(`server rodando na porta ${port}`);
         })

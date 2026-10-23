@@ -95,3 +95,28 @@ export async function logoutApi(): Promise<void> {
     credentials: 'include',
   }).catch(() => null)
 }
+
+export async function solicitarCodigoRecuperacao(email: string): Promise<void> {
+  await postJson<{ message: string }>('usuario/recuperar-senha', { email })
+}
+
+export async function verificarCodigoRecuperacao(
+  email: string,
+  codigo: string,
+): Promise<string> {
+  const resposta = await postJson<{ reset_token: string }>('usuario/verificar-codigo', {
+    email,
+    codigo,
+  })
+  return resposta.reset_token
+}
+
+export async function redefinirSenhaRecuperacao(
+  resetToken: string,
+  novaSenha: string,
+): Promise<void> {
+  await postJson<{ message: string }>('usuario/redefinir-senha', {
+    reset_token: resetToken,
+    nova_senha: novaSenha,
+  })
+}

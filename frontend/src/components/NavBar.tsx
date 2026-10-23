@@ -1,31 +1,14 @@
 import { useState } from 'react'
-import { NavLink, useNavigate } from 'react-router-dom'
-import { useAuth } from '../lib/useAuth.ts'
+import { NavLink } from 'react-router-dom'
+import UserBar from './UserBar.tsx'
 import './NavBar.css'
 
-function inicialDo(nome: string): string {
-  const letra = nome.trim().charAt(0)
-  return letra ? letra.toUpperCase() : 'A'
-}
-
 function NavBar() {
-  const { usuario, sair } = useAuth()
-  const navigate = useNavigate()
   const [busca, setBusca] = useState('')
-  const [saindo, setSaindo] = useState(false)
-
-  async function aoSair() {
-    setSaindo(true)
-    try {
-      await sair()
-    } finally {
-      setSaindo(false)
-      navigate('/login', { replace: true })
-    }
-  }
 
   return (
     <header className="navbar-shell">
+      <UserBar />
       <nav className="navbar" aria-label="Navegação principal">
         <span className="navbar__marca">AgendaChrome</span>
 
@@ -47,26 +30,8 @@ function NavBar() {
           <NavLink to="/agendamentos" className="navbar__link">
             Agendamentos
           </NavLink>
-          {usuario?.perfil === 'Coordenador' && (
-            <NavLink to="/gerenciamento" className="navbar__link">
-              Gerenciar
-            </NavLink>
-          )}
         </div>
 
-        <div className="navbar__usuario">
-          <span className="navbar__avatar" aria-hidden="true">
-            {usuario ? inicialDo(usuario.nome) : 'A'}
-          </span>
-          <button
-            type="button"
-            className="navbar__sair"
-            onClick={aoSair}
-            disabled={saindo}
-          >
-            {saindo ? 'Saindo…' : 'Sair →'}
-          </button>
-        </div>
       </nav>
     </header>
   )

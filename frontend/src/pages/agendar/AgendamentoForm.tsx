@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
+import UserBar from '../../components/UserBar.tsx'
 import { getJson, postJson } from '../../lib/api.ts'
-import { useAuth } from '../../lib/useAuth.ts'
 import './AgendamentoForm.css'
 
 type Opcao = { id: string; rotulo: string }
@@ -165,8 +165,6 @@ function Selecao({ id, rotulo, valor, opcoes, vazio, desabilitado, aoMudar }: Pr
 }
 
 function AgendamentoForm() {
-  const { usuario, sair } = useAuth()
-  const navigate = useNavigate()
   const [dados, setDados] = useState<DadosFormulario>(dadosIniciais)
   const [opcoes, setOpcoes] = useState<Opcoes>(OPCOES_VAZIAS)
   const [carregando, setCarregando] = useState(true)
@@ -174,7 +172,6 @@ function AgendamentoForm() {
   const [erro, setErro] = useState<string | null>(null)
   const [sucesso, setSucesso] = useState<Sucesso | null>(null)
   const [enviando, setEnviando] = useState(false)
-  const [saindo, setSaindo] = useState(false)
   const [disponibilidade, setDisponibilidade] = useState<Disponibilidade | null>(null)
   const [tabela, setTabela] = useState<LinhaTabela[]>([])
   const [aba, setAba] = useState<AbaPainel>('agendamentos')
@@ -225,16 +222,6 @@ function AgendamentoForm() {
     setDisponibilidade(null)
     setErro(null)
     setSucesso(null)
-  }
-
-  async function aoSair() {
-    setSaindo(true)
-    try {
-      await sair()
-    } finally {
-      setSaindo(false)
-      navigate('/login', { replace: true })
-    }
   }
 
   useEffect(() => {
@@ -486,29 +473,11 @@ function AgendamentoForm() {
     return <p className="agendar-aviso agendar-aviso--erro">{erroCarregamento}</p>
   }
 
-  const inicial = (usuario?.nome ?? 'U').trim().charAt(0).toUpperCase() || 'U'
-
   return (
     <main className="agendar">
       <header className="agendar-topo">
         <h1>AgendaChrome</h1>
-        <div className="agendar-usuario">
-          <span className="agendar-avatar" aria-hidden="true">{inicial}</span>
-          <span className="agendar-nome">{usuario?.nome ?? 'Usuário'}</span>
-          <button
-            type="button"
-            className="agendar-engrenagem"
-            onClick={aoSair}
-            disabled={saindo}
-            title="Sair"
-            aria-label="Sair"
-          >
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <circle cx="12" cy="12" r="3" />
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-            </svg>
-          </button>
-        </div>
+        <UserBar />
       </header>
 
       <div className="agendar-barra">

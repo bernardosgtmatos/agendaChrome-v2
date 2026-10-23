@@ -61,20 +61,6 @@
   font-weight: 500;
 }
 
-.agendar-engrenagem {
-  border: 0;
-  background: transparent;
-  color: #2e9bd0;
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 50%;
-  display: inline-flex;
-}
-
-.agendar-engrenagem:hover {
-  background: rgba(255, 255, 255, 0.5);
-}
-
 .agendar-barra {
   max-width: 1381px;
   margin: 0 auto 16px;
@@ -550,10 +536,6 @@ td:first-child .celula {
     min-height: 48px;
     padding: 8px 10px;
     font-size: 15px;
-  }
-
-  .agendar-engrenagem {
-    padding: 9px;
   }
 
   .agendar-tabela {

@@ -59,7 +59,9 @@ const listLocal = async (req,res) => {
 }
 const listUsers = async (req,res) => {
     try {
-        const listUsuarios = await Usuario.findAll()
+        const listUsuarios = await Usuario.findAll({
+            attributes: { exclude: ['senha', 'token_version'] }
+        })
         return res.status(200).json(listUsuarios)
     } catch (error) {
         console.error(error)

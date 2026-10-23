@@ -5,6 +5,7 @@ import AgendamentoForm from './pages/agendar/AgendamentoForm.tsx'
 import AgendamentoListagem from './pages/agendamentos/AgendamentoListagem.tsx'
 import Gerenciamento from './pages/gerenciamento/Gerenciamento.tsx'
 import Login from './pages/login/Login.tsx'
+import RecuperarSenha from './pages/recuperar-senha/RecuperarSenha.tsx'
 import './App.css'
 
 function Layout() {
@@ -65,6 +66,7 @@ function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/recuperar-senha" element={<RecuperarSenha />} />
       <Route path="/" element={<Raiz />} />
       <Route element={<RequireAuth />}>
         <Route element={<Layout />}>

@@ -33,6 +33,11 @@ const Usuario = sequelize.define('Usuario',{
             isIn: [['Coordenador', 'Professor']]
         }
     },
+    token_version:{
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0
+    },
 },{
     defaultScope:{
         attributes: {exclude: ['senha']}
