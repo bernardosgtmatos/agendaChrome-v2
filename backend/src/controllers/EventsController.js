@@ -4,6 +4,7 @@ const Turmas = require("../model/TurmasModel")
 const local = require("../model/LocalModel")
 const { Usuario, Agendamento } = require("../model")
 const { getOcupacao, getOcupacaoLocal } = require("../services/EstoqueService")
+const { finalizarAgendamentosPassados } = require("../services/AgendamentoStatusService")
 const sequelize = require('../config/Database')
 
 const ListHorarios_ret = async (req,res) => {
@@ -90,6 +91,9 @@ const listAgend = async (req,res) => {
         })
     }
     try {
+        await finalizarAgendamentosPassados().catch((erro) => {
+            console.error('erro ao sincronizar status de agendamentos:', erro)
+        })
         const offset = (page -1)*limit
         const where = {}
         if (status && status !== 'todos' && status !== 'all') where.status = status

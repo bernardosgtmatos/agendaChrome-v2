@@ -7,6 +7,7 @@ const local = require("../model/LocalModel")
 const Usuario = require("../model/UserModel")
 const Agendamento = require("../model/AgendamentoModel")
 const { checkDisponibilidade, checkLocalLivre } = require("../services/EstoqueService")
+const { finalizarAgendamentosPassados } = require("../services/AgendamentoStatusService")
 
 
 
@@ -172,6 +173,9 @@ const Novoagendamento = async (req,res) => {
 
 const listAgendamentos = async (req,res) => {
     try {
+        await finalizarAgendamentosPassados().catch((erro) => {
+            console.error('erro ao sincronizar status de agendamentos:', erro)
+        })
         const agendamentos = await Agendamento.findAll()
         console.log('agendamentos listados',agendamentos)
         return res.status(200).json({

@@ -26,6 +26,7 @@ const sequelize = require('./src/config/Database.js')
 const UserRoute = require('./src/routes/UserRoute.js')
 const EventRoute = require('./src/routes/EventsRoute.js')
 const { registrarStatusEmail } = require('./src/services/EmailService.js')
+const { finalizarAgendamentosPassados } = require('./src/services/AgendamentoStatusService.js')
 
 
 //rotas
@@ -47,6 +48,14 @@ const iniciar = async () => {
     try {
         await databaseSYNC()
         registrarStatusEmail()
+        await finalizarAgendamentosPassados().catch((erro) => {
+            console.error('erro ao sincronizar status de agendamentos na inicialização:', erro)
+        })
+        setInterval(() => {
+            finalizarAgendamentosPassados().catch((erro) => {
+                console.error('erro ao sincronizar status de agendamentos:', erro)
+            })
+        }, 5 * 60 * 1000)
         app.listen(port, () => {
             console.log(`server rodando na porta ${port}`);
         })
