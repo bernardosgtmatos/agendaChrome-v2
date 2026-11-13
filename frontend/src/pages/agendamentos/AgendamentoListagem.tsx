@@ -63,10 +63,19 @@ const META_INICIAL: MetaPaginacao = {
   hasPrev: false,
 }
 
-function buscarAgendamentos(pagina: number): Promise<RespostaPaginada<Agendamento>> {
-  return getJson<RespostaPaginada<Agendamento>>(
-    `events/listAgend?p=${pagina}&l=${LIMITE_PAGINA}`,
-  )
+function buscarAgendamentos(
+  pagina: number,
+  filtrosAtuais: { q: string; solicitante: string; turma: string; local: string; status: string },
+): Promise<RespostaPaginada<Agendamento>> {
+  const params = new URLSearchParams()
+  params.set('p', String(pagina))
+  params.set('l', String(LIMITE_PAGINA))
+  if (filtrosAtuais.q.trim()) params.set('q', filtrosAtuais.q.trim())
+  if (filtrosAtuais.solicitante !== 'todos') params.set('solicitante', filtrosAtuais.solicitante)
+  if (filtrosAtuais.turma !== 'todos') params.set('turma', filtrosAtuais.turma)
+  if (filtrosAtuais.local !== 'todos') params.set('local', filtrosAtuais.local)
+  if (filtrosAtuais.status !== 'todos') params.set('status', filtrosAtuais.status)
+  return getJson<RespostaPaginada<Agendamento>>(`events/listAgend?${params.toString()}`)
 }
 
 function indexar<T extends { id: string }>(
@@ -101,6 +110,14 @@ function AgendamentoListagem() {
   const [cancelandoId, setCancelandoId] = useState<string | null>(null)
   const [gruposFechados, setGruposFechados] = useState<Set<string>>(new Set())
   const [observacaoModal, setObservacaoModal] = useState<string | null>(null)
+  const [busca, setBusca] = useState('')
+  const [filtros, setFiltros] = useState({
+    q: '',
+    solicitante: 'todos',
+    turma: 'todos',
+    local: 'todos',
+    status: 'todos',
+  })
 
   useEffect(() => {
     let cancelado = false
@@ -138,7 +155,7 @@ function AgendamentoListagem() {
     let cancelado = false
     let ajustandoPagina = false
 
-    buscarAgendamentos(page)
+    buscarAgendamentos(page, filtros)
       .then((resposta) => {
         if (cancelado) return
         if (resposta.lista.length === 0 && page > 1 && resposta.meta.totalPages > 0) {
@@ -164,12 +181,12 @@ function AgendamentoListagem() {
     return () => {
       cancelado = true
     }
-  }, [page])
+  }, [page, filtros])
 
   async function recarregarPaginaAtual() {
     setCarregandoPagina(true)
     try {
-      const resposta = await buscarAgendamentos(page)
+      const resposta = await buscarAgendamentos(page, filtros)
       setAgendamentos(resposta.lista)
       setMeta(resposta.meta)
     } finally {
@@ -199,6 +216,17 @@ function AgendamentoListagem() {
     setCarregandoPagina(true)
     setPage(destino)
   }
+
+  useEffect(() => {
+    const temporizador = setTimeout(() => {
+      setFiltros((atual) => {
+        if (atual.q === busca) return atual
+        return { ...atual, q: busca }
+      })
+      setPage(1)
+    }, 400)
+    return () => clearTimeout(temporizador)
+  }, [busca])
 
   const rotulos = {
     usuarios: indexar(referencias.usuarios, (usuario) => usuario.nome),
@@ -274,6 +302,85 @@ function AgendamentoListagem() {
           : `${meta.total} agendamentos registrados.`}
         {meta.totalPages > 1 ? ` Página ${meta.page} de ${meta.totalPages}.` : ''}
       </p>
+
+      <div className="agendamento-lista__filtros">
+        <label className="agendamento-campo">
+          <span>Buscar</span>
+          <input
+            type="search"
+            value={busca}
+            onChange={(evento) => setBusca(evento.target.value)}
+            placeholder="Nome ou protocolo"
+          />
+        </label>
+        <label className="agendamento-campo">
+          <span>Solicitante</span>
+          <select
+            value={filtros.solicitante}
+            onChange={(evento) => {
+              setFiltros((atual) => ({ ...atual, solicitante: evento.target.value }))
+              setPage(1)
+            }}
+          >
+            <option value="todos">Todos</option>
+            {referencias.usuarios.map((usuario) => (
+              <option key={usuario.id} value={usuario.id}>
+                {usuario.nome}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="agendamento-campo">
+          <span>Turma</span>
+          <select
+            value={filtros.turma}
+            onChange={(evento) => {
+              setFiltros((atual) => ({ ...atual, turma: evento.target.value }))
+              setPage(1)
+            }}
+          >
+            <option value="todos">Todos</option>
+            {referencias.turmas.map((turma) => (
+              <option key={turma.id} value={turma.id}>
+                {turma.serie}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="agendamento-campo">
+          <span>Local</span>
+          <select
+            value={filtros.local}
+            onChange={(evento) => {
+              setFiltros((atual) => ({ ...atual, local: evento.target.value }))
+              setPage(1)
+            }}
+          >
+            <option value="todos">Todos</option>
+            {referencias.locais.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.nome ?? 'Sem nome'}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="agendamento-campo">
+          <span>Status</span>
+          <select
+            value={filtros.status}
+            onChange={(evento) => {
+              setFiltros((atual) => ({ ...atual, status: evento.target.value }))
+              setPage(1)
+            }}
+          >
+            <option value="todos">Todos</option>
+            <option value="Pendente">Pendente</option>
+            <option value="Em progresso">Em progresso</option>
+            <option value="Finalizado">Finalizado</option>
+            <option value="Cancelado">Cancelado</option>
+          </select>
+        </label>
+      </div>
 
       {linhas.length === 0 ? (
         <p className="agendamento-lista__vazio">

@@ -1,4 +1,4 @@
-const { where } = require("sequelize")
+const { where, Op } = require("sequelize")
 const { horario_retirada, horarios_devolução } = require("../model/HorariosModel")
 const Turmas = require("../model/TurmasModel")
 const local = require("../model/LocalModel")
@@ -73,7 +73,7 @@ const listUsers = async (req,res) => {
 }
 
 const listAgend = async (req,res) => {
-    const {p,l} = req.query 
+    const {p,l,q,solicitante,turma,local,status} = req.query 
     let page = Number(p)
     let limit = Number(l)
     if(!Number.isInteger(page)||!Number.isInteger(limit)){
@@ -91,12 +91,30 @@ const listAgend = async (req,res) => {
     }
     try {
         const offset = (page -1)*limit
+        const where = {}
+        if (status && status !== 'todos' && status !== 'all') where.status = status
+        if (solicitante && solicitante !== 'todos' && solicitante !== 'all') where.usuario_id = solicitante
+        if (turma && turma !== 'todos' && turma !== 'all') where.turma = turma
+        if (local && local !== 'todos' && local !== 'all') where.local_id = local
+        if (q && String(q).trim()) {
+            const termo = String(q).trim()
+            const usuarios = await Usuario.findAll({
+                where: { nome: { [Op.like]: `%${termo}%` } },
+                attributes: ['id'],
+                limit: 200,
+            })
+            const ids = usuarios.map((u) => u.id)
+            const condicoes = [{ id: { [Op.like]: `${termo}%` } }]
+            if (ids.length) condicoes.push({ usuario_id: { [Op.in]: ids } })
+            where[Op.or] = condicoes
+        }
         const {rows, count} = await Agendamento.findAndCountAll({
+            where,
             limit,
             offset,
             order: [['date', 'DESC']],
         })
-        const totalPages = Math.ceil(count/limit) //pega o total de agendamentos e divide pela qnt por pagina e retonar a quantidade de pagina, se der um numero decimal arredonda pra cima e retorna uma pagina com menos agendamentos ate completar o grid
+        const totalPages = Math.ceil(count/limit) || 1
         return res.status(200).json({
             meta: {
                 total: count,

@@ -58,6 +58,52 @@
   gap: 14px;
 }
 
+.agendamento-lista__filtros {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+  padding: 16px;
+  border: 1px solid var(--lista-stroke);
+  border-radius: 16px;
+  background: var(--lista-card);
+  box-sizing: border-box;
+}
+
+.agendamento-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.agendamento-campo span {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--lista-ink);
+}
+
+.agendamento-campo input,
+.agendamento-campo select {
+  height: 40px;
+  box-sizing: border-box;
+  padding: 0 12px;
+  border: 1px solid var(--lista-stroke);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--lista-ink);
+  font: inherit;
+  font-size: 14px;
+  min-width: 0;
+  outline: none;
+}
+
+.agendamento-campo input:focus-visible,
+.agendamento-campo select:focus-visible {
+  border-color: var(--lista-ink);
+  box-shadow: 0 0 0 3px rgba(143, 201, 228, 0.4);
+}
+
 .agendamento-grupo {
   background: var(--lista-card);
   border: 1px solid var(--lista-stroke);
@@ -142,8 +188,6 @@
 
 .agendamento-grupo__tabela tbody td {
   background: #fff;
-  border-top: 1px solid var(--lista-stroke);
-  border-bottom: 1px solid var(--lista-stroke);
 }
 
 /* .agendamento-grupo__tabela tbody td:first-child {
@@ -423,6 +467,17 @@
     align-self: flex-start;
   }
 
+  .agendamento-lista__filtros {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 12px;
+  }
+
+  .agendamento-campo input,
+  .agendamento-campo select {
+    height: 44px;
+    font-size: 16px;
+  }
+
   .agendamento-lista__paginacao {
     flex-direction: column;
     align-items: stretch;
@@ -432,6 +487,12 @@
   .agendamento-lista__paginacao button {
     width: 100%;
     min-height: 48px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .agendamento-lista__filtros {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
