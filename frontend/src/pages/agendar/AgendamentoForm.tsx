@@ -538,11 +538,9 @@ function AgendamentoForm() {
                       ? 'vazio'
                       : linha.disponivel <= 0
                         ? 'indisponivel'
-                        : linha.disponivel < 10
-                          ? 'critico'
-                          : linha.disponivel <= linha.total / 2
-                            ? 'limitado'
-                            : 'disponivel'
+                        : linha.disponivel <= linha.total / 2
+                          ? 'limitado'
+                          : 'disponivel'
                     const pct = linha.total && linha.total > 0 && linha.disponivel !== null
                       ? Math.round((linha.disponivel / linha.total) * 100)
                       : 0
@@ -575,8 +573,7 @@ function AgendamentoForm() {
                             <span className={`estado estado--${st}`}>
                               {st === 'disponivel' && 'Disponível'}
                               {st === 'limitado' && 'Limitado'}
-                              {st === 'critico' && 'Indisponível'}
-                              {st === 'indisponivel' && 'Indisponível'}
+                               {st === 'indisponivel' && 'Indisponível'}
                               {st === 'vazio' && '—'}
                             </span>
                           )}
