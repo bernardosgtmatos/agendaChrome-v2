@@ -320,60 +320,60 @@ function AgendamentoListagem() {
                           </tr>
                         </thead>
                         <tbody>
-                          {grupo.itens.map((linha) => (
-                            <tr key={linha.id}>
-                              <td>
-                                <span className="agendamento-grupo__solicitante">
-                                  {linha.solicitante}
-                                </span>
-                              </td>
-                              <td>{linha.quantidade}</td>
-                              <td>{linha.turma}</td>
-                              <td>{linha.retirada}</td>
-                              <td>{linha.devolucao}</td>
-                              <td>{linha.local}</td>
-                              <td>
-                                {linha.observacao === VAZIO ? (
-                                  VAZIO
-                                ) : (
-                                  <button
-                                    type="button"
-                                    className="agendamento-grupo__obs"
-                                    onClick={() => setObservacaoModal(linha.observacao)}
-                                    title={linha.observacao}
-                                  >
-                                    {linha.observacao.length > 28
-                                      ? `${linha.observacao.slice(0, 28)}…`
-                                      : linha.observacao}
-                                    <span className="agendamento-grupo__obs-ver">ver mais</span>
-                                  </button>
-                                )}
-                              </td>
-                              <td>
-                                <span
-                                  className={`agendamento-grupo__status${
-                                    linha.cancelado
-                                      ? ' agendamento-grupo__status--cancelado'
-                                      : ''
-                                  }`}
-                                >
-                                  {linha.status}
-                                </span>
-                              </td>
-                              <td>
-                                {!linha.cancelado && (
-                                  <button
-                                    type="button"
-                                    className="agendamento-grupo__cancelar"
-                                    disabled={cancelandoId === linha.id || carregandoPagina}
-                                    onClick={() => cancelar(linha.id)}
-                                  >
-                                    {cancelandoId === linha.id ? 'Cancelando…' : 'Cancelar'}
-                                  </button>
-                                )}
-                              </td>
-                            </tr>
-                          ))}
+                            {grupo.itens.map((linha) => (
+                             <tr key={linha.id}>
+                               <td data-label="Solicitante">
+                                 <span className="agendamento-grupo__solicitante">
+                                   {linha.solicitante}
+                                 </span>
+                               </td>
+                               <td data-label="Quantidade">{linha.quantidade}</td>
+                               <td data-label="Turma">{linha.turma}</td>
+                               <td data-label="Retirada">{linha.retirada}</td>
+                               <td data-label="Devolução">{linha.devolucao}</td>
+                               <td data-label="Local">{linha.local}</td>
+                               <td data-label="Observação">
+                                 {linha.observacao === VAZIO ? (
+                                   VAZIO
+                                 ) : (
+                                   <button
+                                     type="button"
+                                     className="agendamento-grupo__obs"
+                                     onClick={() => setObservacaoModal(linha.observacao)}
+                                     title={linha.observacao}
+                                   >
+                                     {linha.observacao.length > 28
+                                       ? `${linha.observacao.slice(0, 28)}…`
+                                       : linha.observacao}
+                                     <span className="agendamento-grupo__obs-ver">ver mais</span>
+                                   </button>
+                                 )}
+                               </td>
+                               <td data-label="Status">
+                                 <span
+                                   className={`agendamento-grupo__status${
+                                     linha.cancelado
+                                       ? ' agendamento-grupo__status--cancelado'
+                                       : ''
+                                   }`}
+                                 >
+                                   {linha.status}
+                                 </span>
+                               </td>
+                               <td data-label="Ações">
+                                 {!linha.cancelado && (
+                                   <button
+                                     type="button"
+                                     className="agendamento-grupo__cancelar"
+                                     disabled={cancelandoId === linha.id || carregandoPagina}
+                                     onClick={() => cancelar(linha.id)}
+                                   >
+                                     {cancelandoId === linha.id ? 'Cancelando…' : 'Cancelar'}
+                                   </button>
+                                 )}
+                               </td>
+                             </tr>
+                           ))}
                         </tbody>
                       </table>
                     </div>

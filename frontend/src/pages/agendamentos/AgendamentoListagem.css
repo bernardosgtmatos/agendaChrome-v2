@@ -348,14 +348,79 @@
     font-size: 15px;
   }
 
+  .agendamento-grupo__rolagem {
+    overflow-x: visible;
+  }
+
   .agendamento-grupo__tabela {
-    min-width: 760px;
+    min-width: 0;
+    display: block;
     font-size: 13px;
   }
 
-  .agendamento-grupo__tabela th,
+  .agendamento-grupo__tabela thead {
+    display: none;
+  }
+
+  .agendamento-grupo__tabela tbody {
+    display: block;
+  }
+
+  .agendamento-grupo__tabela tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+    padding: 12px;
+    margin-bottom: 10px;
+    border: 1px solid var(--lista-stroke);
+    border-radius: 14px;
+    background: #fff;
+    box-sizing: border-box;
+  }
+
   .agendamento-grupo__tabela td {
-    padding: 6px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    min-width: 0;
+  }
+
+  .agendamento-grupo__tabela td::before {
+    content: attr(data-label);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    opacity: 0.65;
+  }
+
+  .agendamento-grupo__tabela td[data-label='Ações'] {
+    padding-top: 4px;
+  }
+
+  .agendamento-grupo__solicitante {
+    white-space: normal;
+    word-break: break-word;
+    overflow: visible;
+    text-overflow: clip;
+    max-width: 100%;
+    align-self: flex-start;
+  }
+
+  .agendamento-grupo__obs {
+    flex-wrap: wrap;
+  }
+
+  .agendamento-grupo__cancelar {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .agendamento-grupo__status {
+    align-self: flex-start;
   }
 
   .agendamento-lista__paginacao {
