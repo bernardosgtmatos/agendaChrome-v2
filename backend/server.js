@@ -7,6 +7,7 @@ const express = require('express')
 const app = express()
 const cors = require('cors')
 const cookieParser = require('cookie-parser')
+const rateLimiter = require('./src/middleware/RateLimit.js')
 
 const port = process.env.PORT || 5000
 
@@ -17,6 +18,7 @@ app.use(cors({
 }))
 app.use(express.json())
 app.use(cookieParser())
+app.use(rateLimiter)
 
 //rotas import
 const AdminRoute = require('./src/routes/AdminRoute.js')
