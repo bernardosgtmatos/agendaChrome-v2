@@ -129,6 +129,11 @@ function Gerenciamento() {
   const [filtroData, setFiltroData] = useState('')
 
   const [modal, setModal] = useState<Modal | null>(null)
+  const [exclusaoPendente, setExclusaoPendente] = useState<{
+    tipo: 'usuario' | 'turma' | 'local'
+    id: string
+    nome: string
+  } | null>(null)
   const [salvando, setSalvando] = useState(false)
   const [formUsuario, setFormUsuario] = useState<FormUsuario>(FORM_USUARIO_VAZIO)
   const [formTurma, setFormTurma] = useState('')
@@ -170,12 +175,14 @@ function Gerenciamento() {
   }, [versao])
 
   useEffect(() => {
-    if (!modal) return
+    if (!modal && !exclusaoPendente) return
     const overflowAnterior = document.body.style.overflow
     document.body.style.overflow = 'hidden'
 
     function aoTeclar(evento: KeyboardEvent) {
-      if (evento.key === 'Escape' && !salvando) setModal(null)
+      if (evento.key !== 'Escape' || salvando) return
+      if (exclusaoPendente) setExclusaoPendente(null)
+      else setModal(null)
     }
 
     document.addEventListener('keydown', aoTeclar)
@@ -183,7 +190,7 @@ function Gerenciamento() {
       document.body.style.overflow = overflowAnterior
       document.removeEventListener('keydown', aoTeclar)
     }
-  }, [modal, salvando])
+  }, [modal, exclusaoPendente, salvando])
 
   function limparAvisos() {
     setErro(null)
@@ -332,29 +339,42 @@ function Gerenciamento() {
     )
   }
 
-  async function excluirUsuario(usuario: UsuarioItem) {
-    if (!window.confirm(`Excluir o usuário "${usuario.nome}"?`)) return
-    await executarAcao(
-      () => deleteJson(`admin/usuarios/${usuario.id}`),
-      'Usuário excluído com sucesso.',
-    )
+  function excluirUsuario(usuario: UsuarioItem) {
+    setExclusaoPendente({ tipo: 'usuario', id: usuario.id, nome: usuario.nome })
   }
 
-  async function excluirTurma(turma: Turma) {
-    if (!window.confirm(`Excluir a turma "${turma.serie}"?`)) return
-    await executarAcao(
-      () => deleteJson(`admin/turmas/${turma.id}`),
-      'Turma excluída com sucesso.',
-    )
+  function excluirTurma(turma: Turma) {
+    setExclusaoPendente({ tipo: 'turma', id: turma.id, nome: turma.serie })
   }
 
-  async function excluirLocal(local: Local) {
-    const nome = local.nome ?? 'sem nome'
-    if (!window.confirm(`Excluir o local "${nome}"?`)) return
-    await executarAcao(
-      () => deleteJson(`admin/locais/${local.id}`),
-      'Local excluído com sucesso.',
-    )
+  function excluirLocal(local: Local) {
+    setExclusaoPendente({ tipo: 'local', id: local.id, nome: local.nome ?? 'sem nome' })
+  }
+
+  async function confirmarExclusao() {
+    if (!exclusaoPendente) return
+    setSalvando(true)
+    setErro(null)
+    setAviso(null)
+    try {
+      if (exclusaoPendente.tipo === 'usuario') {
+        await deleteJson(`admin/usuarios/${exclusaoPendente.id}`)
+        setAviso('Usuário excluído com sucesso.')
+      } else if (exclusaoPendente.tipo === 'turma') {
+        await deleteJson(`admin/turmas/${exclusaoPendente.id}`)
+        setAviso('Turma excluída com sucesso.')
+      } else {
+        await deleteJson(`admin/locais/${exclusaoPendente.id}`)
+        setAviso('Local excluído com sucesso.')
+      }
+      setExclusaoPendente(null)
+      setCarregando(true)
+      setVersao((atual) => atual + 1)
+    } catch (falha) {
+      setErro(falha instanceof Error ? falha.message : 'Não foi possível concluir a ação.')
+    } finally {
+      setSalvando(false)
+    }
   }
 
   const usuariosFiltrados = usuarios.filter((usuario) => {
@@ -834,6 +854,67 @@ function Gerenciamento() {
                 </div>
               </form>
             )}
+          </div>
+        </div>
+      )}
+
+      {exclusaoPendente && (
+        <div
+          className="gerenciamento-modal"
+          role="presentation"
+          onMouseDown={(evento) => {
+            if (evento.target === evento.currentTarget && !salvando) setExclusaoPendente(null)
+          }}
+        >
+          <div
+            className="gerenciamento-modal__card"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="gerenciamento-exclusao-titulo"
+          >
+            <div className="gerenciamento-modal__cabecalho">
+              <h2 id="gerenciamento-exclusao-titulo">Confirmar exclusão</h2>
+              <button
+                type="button"
+                className="gerenciamento-modal__fechar"
+                onClick={() => setExclusaoPendente(null)}
+                disabled={salvando}
+                aria-label="Fechar"
+              >
+                ×
+              </button>
+            </div>
+
+            {erro && (
+              <p className="gerenciamento-modal__erro" role="alert">
+                {erro}
+              </p>
+            )}
+
+            <p className="gerenciamento-modal__mensagem">
+              {exclusaoPendente.tipo === 'usuario' && `Excluir o usuário "${exclusaoPendente.nome}"?`}
+              {exclusaoPendente.tipo === 'turma' && `Excluir a turma "${exclusaoPendente.nome}"?`}
+              {exclusaoPendente.tipo === 'local' && `Excluir o local "${exclusaoPendente.nome}"?`}
+            </p>
+
+            <div className="gerenciamento-modal__acoes">
+              <button
+                type="button"
+                className="gerenciamento__botao-contorno"
+                onClick={() => setExclusaoPendente(null)}
+                disabled={salvando}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="gerenciamento__botao"
+                onClick={confirmarExclusao}
+                disabled={salvando}
+              >
+                {salvando ? 'Excluindo...' : 'Excluir'}
+              </button>
+            </div>
           </div>
         </div>
       )}
