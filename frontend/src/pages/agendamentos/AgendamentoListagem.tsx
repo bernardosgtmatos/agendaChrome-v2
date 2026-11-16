@@ -110,6 +110,7 @@ function AgendamentoListagem() {
   const [cancelandoId, setCancelandoId] = useState<string | null>(null)
   const [gruposFechados, setGruposFechados] = useState<Set<string>>(new Set())
   const [observacaoModal, setObservacaoModal] = useState<string | null>(null)
+  const [cancelamentoPendenteId, setCancelamentoPendenteId] = useState<string | null>(null)
   const [busca, setBusca] = useState('')
   const [filtros, setFiltros] = useState({
     q: '',
@@ -195,7 +196,6 @@ function AgendamentoListagem() {
   }
 
   async function cancelar(id: string) {
-    if (!window.confirm('Cancelar este agendamento e liberar o estoque do intervalo?')) return
     setCancelandoId(id)
     setErroCarregamento(null)
     try {
@@ -205,10 +205,11 @@ function AgendamentoListagem() {
       setErroCarregamento(
         falha instanceof Error ? falha.message : 'não foi possível cancelar o agendamento',
       )
-    } finally {
-      setCancelandoId(null)
-    }
-  }
+     } finally {
+       setCancelandoId(null)
+       setCancelamentoPendenteId(null)
+     }
+   }
 
   function irParaPagina(proxima: number) {
     const destino = Math.max(1, proxima)
@@ -253,8 +254,9 @@ function AgendamentoListagem() {
       solicitante: rotuloDe(rotulos.usuarios, agendamento.usuario_id),
       observacao: observacao ? observacao : VAZIO,
       status: agendamento.status ?? VAZIO,
-      cancelado: agendamento.status === 'Cancelado',
-    }
+       cancelado: agendamento.status === 'Cancelado',
+       finalizado: agendamento.status === 'Finalizado',
+     }
   })
 
   const grupos = Array.from(
@@ -284,6 +286,15 @@ function AgendamentoListagem() {
     document.addEventListener('keydown', aoTeclar)
     return () => document.removeEventListener('keydown', aoTeclar)
   }, [observacaoModal])
+
+  useEffect(() => {
+    if (!cancelamentoPendenteId) return
+    function aoTeclar(evento: KeyboardEvent) {
+      if (evento.key === 'Escape') setCancelamentoPendenteId(null)
+    }
+    document.addEventListener('keydown', aoTeclar)
+    return () => document.removeEventListener('keydown', aoTeclar)
+  }, [cancelamentoPendenteId])
 
   if (carregandoReferencias || (carregandoPagina && agendamentos.length === 0)) {
     return <p className="agendamento-lista__aviso">Carregando agendamentos...</p>
@@ -467,13 +478,13 @@ function AgendamentoListagem() {
                                    {linha.status}
                                  </span>
                                </td>
-                               <td data-label="Ações">
-                                 {!linha.cancelado && (
+                                <td data-label="Ações">
+                                  {!linha.cancelado && !linha.finalizado && (
                                    <button
                                      type="button"
                                      className="agendamento-grupo__cancelar"
                                      disabled={cancelandoId === linha.id || carregandoPagina}
-                                     onClick={() => cancelar(linha.id)}
+                                      onClick={() => setCancelamentoPendenteId(linha.id)}
                                    >
                                      {cancelandoId === linha.id ? 'Cancelando…' : 'Cancelar'}
                                    </button>
@@ -522,7 +533,47 @@ function AgendamentoListagem() {
         </div>
       )}
 
-      {meta.total > 0 && (
+      {cancelamentoPendenteId && (
+        <div
+          className="agendamento-cancelar-modal"
+          role="presentation"
+          onMouseDown={(evento) => {
+            if (evento.target === evento.currentTarget) setCancelamentoPendenteId(null)
+          }}
+        >
+          <div
+            className="agendamento-cancelar-modal__card"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="agendamento-cancelar-titulo"
+          >
+            <h2 id="agendamento-cancelar-titulo">Cancelar agendamento</h2>
+            <p className="agendamento-cancelar-modal__texto">
+              Cancelar este agendamento e liberar o estoque do intervalo?
+            </p>
+            <div className="agendamento-cancelar-modal__acoes">
+              <button
+                type="button"
+                className="agendamento-cancelar-modal__botao agendamento-cancelar-modal__botao--secundario"
+                onClick={() => setCancelamentoPendenteId(null)}
+                disabled={cancelandoId === cancelamentoPendenteId}
+              >
+                Voltar
+              </button>
+              <button
+                type="button"
+                className="agendamento-cancelar-modal__botao agendamento-cancelar-modal__botao--confirmar"
+                disabled={cancelandoId === cancelamentoPendenteId}
+                onClick={() => cancelar(cancelamentoPendenteId)}
+              >
+                {cancelandoId === cancelamentoPendenteId ? 'Cancelando…' : 'Confirmar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+       {meta.total > 0 && (
         <nav className="agendamento-lista__paginacao" aria-label="Paginação dos agendamentos">
           <button
             type="button"

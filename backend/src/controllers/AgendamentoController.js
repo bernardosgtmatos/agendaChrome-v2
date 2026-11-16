@@ -193,6 +193,9 @@ const cancelarAgendamento = async (req,res) => {
     const usuario_id = req.user.id
     const {agendamento_id} = req.body 
     const t = await sequelize.transaction()
+    await finalizarAgendamentosPassados().catch((erro) => {
+        console.error('erro ao sincronizar status de agendamentos:', erro)
+    })
     if(!agendamento_id){
         console.log('agendamento_id inexistente')
         await t.rollback()
@@ -231,7 +234,14 @@ const cancelarAgendamento = async (req,res) => {
                 message: 'Este agendamento ja foi cancelado.'
             })
         }
-        
+        if(Agend_id.status == 'Finalizado'){
+            if (!t.finished){
+                await t.rollback()
+            }
+            return res.status(409).json({
+                message: 'Não é possível cancelar um agendamento já finalizado.'
+            })
+        }
         const cancelar = await Agend_id.update({status: 'Cancelado'},{transaction: t})
         console.log(`agendamento cancelado com sucesso`)
         await t.commit()

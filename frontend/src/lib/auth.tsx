@@ -1,19 +1,29 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { loginApi, logoutApi, meApi, type UsuarioSessao } from './api.ts'
+import { loginApi, logoutApi, meApi, RateLimitError, type UsuarioSessao } from './api.ts'
 import { AuthContext } from './auth-context.ts'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [usuario, setUsuario] = useState<UsuarioSessao | null>(null)
   const [carregandoSessao, setCarregandoSessao] = useState(true)
+  const [erroSessao, setErroSessao] = useState<string | null>(null)
 
   useEffect(() => {
     let ativo = true
     meApi()
       .then((sessao) => {
-        if (ativo) setUsuario(sessao)
+        if (ativo) {
+          setUsuario(sessao)
+          setErroSessao(null)
+        }
       })
-      .catch(() => {
-        if (ativo) setUsuario(null)
+      .catch((erro) => {
+        if (!ativo) return
+        if (erro instanceof RateLimitError) {
+          // Não desloga: mantém o estado atual da sessão.
+          setErroSessao(erro.message)
+        } else {
+          setUsuario(null)
+        }
       })
       .finally(() => {
         if (ativo) setCarregandoSessao(false)
@@ -42,8 +52,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const valor = useMemo(
-    () => ({ usuario, carregandoSessao, entrar, sair }),
-    [usuario, carregandoSessao, entrar, sair],
+    () => ({ usuario, carregandoSessao, erroSessao, entrar, sair }),
+    [usuario, carregandoSessao, erroSessao, entrar, sair],
   )
 
   return <AuthContext.Provider value={valor}>{children}</AuthContext.Provider>

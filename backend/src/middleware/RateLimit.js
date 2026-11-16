@@ -5,6 +5,7 @@ const rateLimiter = rateLimit({
     max: 100,
     standardHeaders: true,
     legacyHeaders: false,
+    skip: (req) => req.method === 'GET' && req.path === '/usuario/me',
     message: { message: 'Muitas requisições. Tente novamente em instantes.' },
 })
 

@@ -1,6 +1,13 @@
 // export const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:5000'
 export const API_BASE = import.meta.env.VITE_API_URL ?? `http://${window.location.hostname}:5000`
 
+export class RateLimitError extends Error {
+  constructor(message = 'Muitas requisições. Tente novamente em instantes.') {
+    super(message)
+    this.name = 'RateLimitError'
+  }
+}
+
 async function lerMensagemErro(resposta: Response): Promise<string> {
   try {
     const corpo = (await resposta.json()) as { message?: string } | string | null
@@ -83,6 +90,9 @@ export async function meApi(): Promise<UsuarioSessao | null> {
     credentials: 'include',
   })
   if (resposta.status === 401) return null
+  if (resposta.status === 429) {
+    throw new RateLimitError(await lerMensagemErro(resposta))
+  }
   if (!resposta.ok) {
     throw new Error(await lerMensagemErro(resposta))
   }
