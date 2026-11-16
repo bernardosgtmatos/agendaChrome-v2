@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { getJson, postJson } from '../../lib/api.ts'
 import './AgendamentoListagem.css'
 
@@ -104,6 +104,7 @@ function AgendamentoListagem() {
   const [referencias, setReferencias] = useState<Referencias>(REFERENCIAS_VAZIAS)
   const [meta, setMeta] = useState<MetaPaginacao>(META_INICIAL)
   const [page, setPage] = useState(1)
+  const paginaDestinoRef = useRef<HTMLInputElement>(null)
   const [carregandoReferencias, setCarregandoReferencias] = useState(true)
   const [carregandoPagina, setCarregandoPagina] = useState(true)
   const [erroCarregamento, setErroCarregamento] = useState<string | null>(null)
@@ -216,6 +217,13 @@ function AgendamentoListagem() {
     if (destino === page) return
     setCarregandoPagina(true)
     setPage(destino)
+  }
+
+  function pularParaPagina() {
+    const numero = Number(paginaDestinoRef.current?.value ?? '')
+    if (!Number.isFinite(numero)) return
+    const destino = Math.min(meta.totalPages, Math.max(1, Math.trunc(numero)))
+    irParaPagina(destino)
   }
 
   useEffect(() => {
@@ -574,33 +582,58 @@ function AgendamentoListagem() {
       )}
 
        {meta.total > 0 && (
-        <nav className="agendamento-lista__paginacao" aria-label="Paginação dos agendamentos">
-          <button
-            type="button"
-            disabled={!meta.hasPrev || carregandoPagina}
-            onClick={() => irParaPagina(1)}
-          >
-            Voltar para o início
-          </button>
-          <button
-            type="button"
-            disabled={!meta.hasPrev || carregandoPagina}
-            onClick={() => irParaPagina(page - 1)}
-          >
-            Anterior
-          </button>
-          <span className="agendamento-lista__pagina">
-            Página {meta.page} de {meta.totalPages || 1}
-          </span>
-          <button
-            type="button"
-            disabled={!meta.hasNext || carregandoPagina}
-            onClick={() => irParaPagina(page + 1)}
-          >
-            Próxima
-          </button>
-        </nav>
-      )}
+         <nav className="agendamento-lista__paginacao" aria-label="Paginação dos agendamentos">
+           <button
+             type="button"
+             disabled={!meta.hasPrev || carregandoPagina}
+             onClick={() => irParaPagina(1)}
+           >
+             Voltar para o início
+           </button>
+           <button
+             type="button"
+             disabled={!meta.hasPrev || carregandoPagina}
+             onClick={() => irParaPagina(page - 1)}
+           >
+             Anterior
+           </button>
+           <span className="agendamento-lista__pagina">
+             Página {meta.page} de {meta.totalPages || 1}
+           </span>
+           <button
+             type="button"
+             disabled={!meta.hasNext || carregandoPagina}
+             onClick={() => irParaPagina(page + 1)}
+           >
+             Próxima
+           </button>
+           <div className="agendamento-lista__ir-pagina">
+             <input
+               ref={paginaDestinoRef}
+               key={page}
+               type="number"
+               min={1}
+               max={meta.totalPages || 1}
+               defaultValue={page}
+               disabled={carregandoPagina}
+               onKeyDown={(evento) => {
+                 if (evento.key === 'Enter') {
+                   evento.preventDefault()
+                   pularParaPagina()
+                 }
+               }}
+               aria-label="Ir para página"
+             />
+             <button
+               type="button"
+               disabled={carregandoPagina}
+               onClick={pularParaPagina}
+             >
+               Ir
+             </button>
+           </div>
+         </nav>
+       )}
     </section>
   )
 }

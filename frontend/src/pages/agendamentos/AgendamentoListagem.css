@@ -378,6 +378,46 @@
   white-space: nowrap;
 }
 
+.agendamento-lista__ir-pagina {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.agendamento-lista__ir-pagina input {
+  width: 72px;
+  min-height: 44px;
+  padding: 0 10px;
+  border: 1px solid var(--lista-stroke);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--lista-ink);
+  font: inherit;
+  font-size: 14px;
+  box-sizing: border-box;
+  outline: none;
+  text-align: center;
+}
+
+.agendamento-lista__ir-pagina button {
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 999px;
+  border: 1px solid var(--lista-stroke);
+  background: var(--lista-btn);
+  color: var(--lista-ink);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.agendamento-lista__ir-pagina button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 @media (max-width: 760px) {
   .agendamento-lista {
     padding: 20px 16px 48px;
