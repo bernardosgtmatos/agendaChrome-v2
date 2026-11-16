@@ -2,9 +2,12 @@
 export const API_BASE = import.meta.env.VITE_API_URL ?? `http://${window.location.hostname}:5000`
 
 export class RateLimitError extends Error {
-  constructor(message = 'Muitas requisições. Tente novamente em instantes.') {
+  retryAfter?: number
+
+  constructor(message = 'Muitas requisições. Tente novamente em instantes.', retryAfter?: number) {
     super(message)
     this.name = 'RateLimitError'
+    this.retryAfter = retryAfter
   }
 }
 
@@ -24,6 +27,13 @@ export async function getJson<T>(caminho: string): Promise<T> {
     credentials: 'include',
   })
   if (!resposta.ok) {
+    if (resposta.status === 429) {
+      const corpo = (await resposta.json().catch(() => null)) as { message?: string; retryAfter?: number } | null
+      throw new RateLimitError(
+        typeof corpo?.message === 'string' ? corpo.message : 'Muitas requisições. Tente novamente em instantes.',
+        typeof corpo?.retryAfter === 'number' ? corpo.retryAfter : undefined,
+      )
+    }
     throw new Error(await lerMensagemErro(resposta))
   }
   return (await resposta.json()) as T
@@ -40,8 +50,18 @@ async function enviarJson<T>(
     credentials: 'include',
     body: corpo === undefined ? undefined : JSON.stringify(corpo),
   })
-  const dados = (await resposta.json().catch(() => null)) as T | { message?: string } | null
+  const dados = (await resposta.json().catch(() => null)) as
+    | T
+    | { message?: string; retryAfter?: number }
+    | null
   if (!resposta.ok) {
+    if (resposta.status === 429) {
+      const corpo = dados as { message?: string; retryAfter?: number } | null
+      throw new RateLimitError(
+        typeof corpo?.message === 'string' ? corpo.message : 'Muitas requisições. Tente novamente em instantes.',
+        typeof corpo?.retryAfter === 'number' ? corpo.retryAfter : undefined,
+      )
+    }
     const mensagem =
       typeof dados === 'string'
         ? dados
@@ -81,6 +101,13 @@ export async function loginApi(email: string, senha: string): Promise<void> {
     body: JSON.stringify({ email, senha }),
   })
   if (!resposta.ok) {
+    if (resposta.status === 429) {
+      const corpo = (await resposta.json().catch(() => null)) as { message?: string; retryAfter?: number } | null
+      throw new RateLimitError(
+        typeof corpo?.message === 'string' ? corpo.message : 'Muitas requisições. Tente novamente em instantes.',
+        typeof corpo?.retryAfter === 'number' ? corpo.retryAfter : undefined,
+      )
+    }
     throw new Error(await lerMensagemErro(resposta))
   }
 }
@@ -91,7 +118,14 @@ export async function meApi(): Promise<UsuarioSessao | null> {
   })
   if (resposta.status === 401) return null
   if (resposta.status === 429) {
-    throw new RateLimitError(await lerMensagemErro(resposta))
+    const corpo = (await resposta.json().catch(() => null)) as { message?: string; retryAfter?: number } | null
+    throw new RateLimitError(
+      typeof corpo?.message === 'string' ? corpo.message : 'Muitas requisições. Tente novamente em instantes.',
+      typeof corpo?.retryAfter === 'number' ? corpo.retryAfter : undefined,
+    )
+  }
+  if (!resposta.ok) {
+    throw new Error(await lerMensagemErro(resposta))
   }
   if (!resposta.ok) {
     throw new Error(await lerMensagemErro(resposta))
