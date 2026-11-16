@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { getJson, postJson } from '../../lib/api.ts'
 import './AgendamentoForm.css'
@@ -129,6 +129,155 @@ function formatarData(iso: string): string {
   const [a, m, d] = iso.split('-')
   if (!a || !m || !d) return iso
   return `${d}/${m}/${a}`
+}
+
+const MESES = [
+  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
+]
+const DIAS_SEMANA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
+
+function parseIso(iso: string): { ano: number; mes: number; dia: number } | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso)
+  if (!m) return null
+  return { ano: Number(m[1]), mes: Number(m[2]) - 1, dia: Number(m[3]) }
+}
+
+function paraIso(ano: number, mes: number, dia: number): string {
+  return `${String(ano).padStart(4, '0')}-${String(mes + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`
+}
+
+type PropsCalendario = {
+  valor: string
+  aoMudar: (valor: string) => void
+  desabilitado?: boolean
+  variante: 'pill' | 'campo'
+  className?: string
+  id?: string
+}
+
+function Calendario({ valor, aoMudar, desabilitado, variante, className, id }: PropsCalendario) {
+  const selecionado = parseIso(valor)
+  const hoje = new Date()
+  const [aberto, setAberto] = useState(false)
+  const [mesVisivel, setMesVisivel] = useState<{ ano: number; mes: number }>(() =>
+    selecionado ? { ano: selecionado.ano, mes: selecionado.mes } : { ano: hoje.getFullYear(), mes: hoje.getMonth() },
+  )
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!aberto) return
+    function aoTeclar(evento: KeyboardEvent) {
+      if (evento.key === 'Escape') setAberto(false)
+    }
+    document.addEventListener('keydown', aoTeclar)
+    return () => {
+      document.removeEventListener('keydown', aoTeclar)
+    }
+  }, [aberto])
+
+  const primeiroDia = new Date(mesVisivel.ano, mesVisivel.mes, 1).getDay()
+  const diasNoMes = new Date(mesVisivel.ano, mesVisivel.mes + 1, 0).getDate()
+  const celulas: (number | null)[] = []
+  for (let i = 0; i < primeiroDia; i++) celulas.push(null)
+  for (let d = 1; d <= diasNoMes; d++) celulas.push(d)
+
+  function selecionarDia(dia: number) {
+    aoMudar(paraIso(mesVisivel.ano, mesVisivel.mes, dia))
+  }
+
+  function mesAnterior() {
+    setMesVisivel((atual) => {
+      const d = new Date(atual.ano, atual.mes - 1, 1)
+      return { ano: d.getFullYear(), mes: d.getMonth() }
+    })
+  }
+
+  function proximoMes() {
+    setMesVisivel((atual) => {
+      const d = new Date(atual.ano, atual.mes + 1, 1)
+      return { ano: d.getFullYear(), mes: d.getMonth() }
+    })
+  }
+
+  const rotulo = valor ? formatarData(valor) : 'Selecionar data'
+
+  return (
+    <div className={`calendario calendario--${variante}${className ? ` ${className}` : ''}`} ref={ref}>
+      <button
+        type="button"
+        id={id}
+        className="calendario__trigger"
+        disabled={desabilitado}
+        onClick={() => {
+          if (desabilitado) return
+          if (!aberto) {
+            const alvo = parseIso(valor)
+            if (alvo) setMesVisivel({ ano: alvo.ano, mes: alvo.mes })
+          }
+          setAberto((v) => !v)
+        }}
+        aria-haspopup="dialog"
+        aria-expanded={aberto}
+      >
+        {variante === 'pill' ? (
+          <>
+            <span>{rotulo}</span>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+              <rect x="3" y="4" width="18" height="18" rx="2" />
+              <path d="M16 2v4M8 2v4M3 10h18" />
+            </svg>
+          </>
+        ) : (
+          <span>{rotulo}</span>
+        )}
+      </button>
+      {aberto && (
+        <div className="calendario__backdrop" onClick={() => setAberto(false)} aria-hidden="true" />
+      )}
+      <div
+        className={`calendario__drawer${aberto ? ' calendario__drawer--aberto' : ''}`}
+        role="dialog"
+        aria-modal="true"
+        aria-hidden={!aberto}
+        aria-label="Calendário"
+      >
+        <div className="calendario__cabecalho">
+          <span className="calendario__mes">{MESES[mesVisivel.mes]} {mesVisivel.ano}</span>
+          <div className="calendario__cabecalho-acoes">
+            <button type="button" className="calendario__nav" onClick={mesAnterior} aria-label="Mês anterior">‹</button>
+            <button type="button" className="calendario__nav" onClick={proximoMes} aria-label="Próximo mês">›</button>
+            <button type="button" className="calendario__fechar" onClick={() => setAberto(false)} aria-label="Fechar calendário">×</button>
+          </div>
+        </div>
+        <div className="calendario__grade-semana">
+          {DIAS_SEMANA.map((d) => (
+            <span key={d} className="calendario__dia-semana">{d}</span>
+          ))}
+        </div>
+        <div className="calendario__grade">
+          {celulas.map((dia, i) => {
+            if (dia === null) return <span key={`v-${i}`} className="calendario__vazio" />
+            const ehSelecionado =
+              selecionado &&
+              selecionado.ano === mesVisivel.ano &&
+              selecionado.mes === mesVisivel.mes &&
+              selecionado.dia === dia
+            return (
+              <button
+                key={dia}
+                type="button"
+                className={`calendario__dia${ehSelecionado ? ' calendario__dia--selecionado' : ''}`}
+                onClick={() => selecionarDia(dia)}
+              >
+                {dia}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+    </div>
+  )
 }
 
 type PropsSelecao = {
@@ -480,20 +629,13 @@ function AgendamentoForm() {
 
       <div className="agendar-barra">
         <span className="agendar-barra__rotulo">Visualizar disponibilidade para:</span>
-        <label className="agendar-data">
-          <span>{formatarData(dados.date)}</span>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-            <rect x="3" y="4" width="18" height="18" rx="2" />
-            <path d="M16 2v4M8 2v4M3 10h18" />
-          </svg>
-          <input
-            type="date"
-            value={dados.date}
-            disabled={enviando}
-            onChange={(e) => atualizar('date', e.target.value)}
-            aria-label="Data da disponibilidade"
-          />
-        </label>
+        <Calendario
+          className="agendar-data"
+          valor={dados.date}
+          aoMudar={(v) => atualizar('date', v)}
+          desabilitado={enviando}
+          variante="pill"
+        />
       </div>
 
       <div className="agendar-barra agendar-barra--abas">
@@ -650,13 +792,12 @@ function AgendamentoForm() {
             <div className="form-duplo">
               <div className="campo">
                 <label htmlFor="date">Data de Agendamento*</label>
-                <input
+                <Calendario
                   id="date"
-                  type="date"
-                  value={dados.date}
-                  disabled={enviando}
-                  onChange={(e) => atualizar('date', e.target.value)}
-                  required
+                  valor={dados.date}
+                  aoMudar={(v) => atualizar('date', v)}
+                  desabilitado={enviando}
+                  variante="campo"
                 />
               </div>
               <div className="campo">
