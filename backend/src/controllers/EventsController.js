@@ -48,8 +48,19 @@ const ListTurmas = async (req,res) => {
 
 const listLocal = async (req,res) => {
     try {
-        const Local = await local.findAll()
-        return res.status(200).json(Local)
+        const locais = await local.findAll()
+        const lista = locais.map((item) => {
+            const json = item.toJSON()
+            const categoria = json.categoria || 'Local exclusivo'
+            return {
+                ...json,
+                categoria,
+                tipo: categoria,
+                exclusivo: categoria !== 'Sala de aula',
+                sala_de_aula: categoria === 'Sala de aula',
+            }
+        })
+        return res.status(200).json(lista)
     } catch (error) {
         console.error(error)
         return res.status(500).json({

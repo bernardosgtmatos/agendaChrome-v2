@@ -252,6 +252,29 @@ const DeleteTurma = async (req,res) => { // funções que alteram o banco nesse 
     }
 }
 
+function normalizarCategoria(body, atual) {
+    if (body === undefined) return atual ?? 'Local exclusivo'
+    if (body.categoria !== undefined) {
+        const v = String(body.categoria).trim()
+        if (v === 'Sala de aula' || v === 'Local exclusivo') return v
+        if (/sala/i.test(v)) return 'Sala de aula'
+        if (/exclus/i.test(v) || /local/i.test(v)) return 'Local exclusivo'
+    }
+    if (body.tipo !== undefined) {
+        const v = String(body.tipo).trim()
+        if (v === 'Sala de aula' || v === 'Local exclusivo') return v
+        if (/sala/i.test(v)) return 'Sala de aula'
+        if (/exclus/i.test(v) || /local/i.test(v)) return 'Local exclusivo'
+    }
+    if (body.exclusivo !== undefined) {
+        return body.exclusivo ? 'Local exclusivo' : 'Sala de aula'
+    }
+    if (body.sala_de_aula !== undefined) {
+        return body.sala_de_aula ? 'Sala de aula' : 'Local exclusivo'
+    }
+    return atual ?? 'Local exclusivo'
+}
+
 const novoLocal = async (req,res) => {
     const {nome} = req.body
     if(!nome || !nome.trim()){
@@ -267,7 +290,8 @@ const novoLocal = async (req,res) => {
             })
         }
         await local.create({
-            nome: nome.trim()
+            nome: nome.trim(),
+            categoria: normalizarCategoria(req.body, 'Local exclusivo')
         })
         return res.status(201).json({
             message: 'Local criado com sucesso.'
@@ -301,7 +325,11 @@ const editLocal = async (req,res) => {
                 message: 'Já existe um local com este nome.'
             })
         }
-        await Local.update({nome:nome.trim()})
+        const dados = { nome: nome.trim() }
+        if (req.body.categoria !== undefined || req.body.tipo !== undefined || req.body.exclusivo !== undefined || req.body.sala_de_aula !== undefined) {
+            dados.categoria = normalizarCategoria(req.body, Local.categoria)
+        }
+        await Local.update(dados)
         return res.status(200).json({
             message:'Local editado com sucesso.'
         })

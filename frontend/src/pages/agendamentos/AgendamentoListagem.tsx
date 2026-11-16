@@ -21,7 +21,7 @@ type Agendamento = {
 type HorarioRetirada = { id: string; horario_retirada: string }
 type HorarioDevolucao = { id: string; 'horarios_devolução': string }
 type Turma = { id: string; serie: string }
-type Local = { id: string; nome: string | null }
+type Local = { id: string; nome: string | null; categoria?: string; tipo?: string }
 type Usuario = { id: string; nome: string; email: string }
 
 type Referencias = {

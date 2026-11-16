@@ -12,6 +12,11 @@ const local = sequelize.define('local',{
         type: DataTypes.STRING,
         allowNull: true,
         unique: true
+    },
+    categoria:{
+        type: DataTypes.STRING,
+        allowNull: false,
+        defaultValue: 'Local exclusivo'
     }
 })
 module.exports = local

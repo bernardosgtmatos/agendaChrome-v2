@@ -13,7 +13,7 @@ type UsuarioItem = {
 }
 
 type Turma = { id: string; serie: string }
-type Local = { id: string; nome: string | null }
+type Local = { id: string; nome: string | null; categoria?: string; tipo?: string }
 type Capacidade = { estoque_total: number }
 
 type Modal =
@@ -133,6 +133,7 @@ function Gerenciamento() {
   const [formUsuario, setFormUsuario] = useState<FormUsuario>(FORM_USUARIO_VAZIO)
   const [formTurma, setFormTurma] = useState('')
   const [formLocal, setFormLocal] = useState('')
+  const [formCategoria, setFormCategoria] = useState('Local exclusivo')
   const [formCapacidade, setFormCapacidade] = useState('')
 
   useEffect(() => {
@@ -221,12 +222,14 @@ function Gerenciamento() {
   function abrirNovoLocal() {
     limparAvisos()
     setFormLocal('')
+    setFormCategoria('Local exclusivo')
     setModal({ tipo: 'local' })
   }
 
   function abrirEditarLocal(local: Local) {
     limparAvisos()
     setFormLocal(local.nome ?? '')
+    setFormCategoria(local.categoria ?? local.tipo ?? 'Local exclusivo')
     setModal({ tipo: 'local', local })
   }
 
@@ -307,8 +310,8 @@ function Gerenciamento() {
       return
     }
     const acao = modal.local
-      ? () => patchJson(`admin/locais/${modal.local!.id}`, { nome })
-      : () => postJson('admin/locais', { nome })
+      ? () => patchJson(`admin/locais/${modal.local!.id}`, { nome, categoria: formCategoria })
+      : () => postJson('admin/locais', { nome, categoria: formCategoria })
     await executarAcao(
       acao,
       modal.local ? 'Local atualizado com sucesso.' : 'Local criado com sucesso.',
@@ -773,6 +776,17 @@ function Gerenciamento() {
                     disabled={salvando}
                     required
                   />
+                </label>
+                <label className="gerenciamento-campo gerenciamento-campo--modal">
+                  <span>Categoria do local*</span>
+                  <select
+                    value={formCategoria}
+                    onChange={(evento) => setFormCategoria(evento.target.value)}
+                    disabled={salvando}
+                  >
+                    <option value="Local exclusivo">Local de uso único</option>
+                    <option value="Sala de aula">Sala de aula</option>
+                  </select>
                 </label>
                 <div className="gerenciamento-modal__acoes">
                   <button

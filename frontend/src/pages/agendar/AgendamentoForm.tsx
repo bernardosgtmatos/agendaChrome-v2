@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { getJson, postJson } from '../../lib/api.ts'
 import './AgendamentoForm.css'
 
-type Opcao = { id: string; rotulo: string }
+type Opcao = { id: string; rotulo: string; categoria?: string }
 
 type Opcoes = {
   retirada: Opcao[]
@@ -15,7 +15,7 @@ type Opcoes = {
 type HorarioRetirada = { id: string; horario_retirada: string }
 type HorarioDevolucao = { id: string; 'horarios_devolução': string }
 type Turma = { id: string; serie: string }
-type Local = { id: string; nome: string }
+type Local = { id: string; nome: string; categoria?: string; tipo?: string }
 
 type OcupacaoLocal = {
   ocupado: boolean
@@ -341,7 +341,7 @@ function AgendamentoForm() {
           retirada: retirada.map((horario) => ({ id: horario.id, rotulo: horario.horario_retirada })),
           devolucao: devolucao.map((horario) => ({ id: horario.id, rotulo: horario['horarios_devolução'] })),
           turmas: turmas.map((turma) => ({ id: turma.id, rotulo: turma.serie })),
-          locais: locais.map((item) => ({ id: item.id, rotulo: item.nome })),
+          locais: locais.map((item) => ({ id: item.id, rotulo: item.nome ?? '', categoria: item.categoria ?? item.tipo })),
         })
       } catch (falha) {
         if (cancelado) return
@@ -439,8 +439,11 @@ function AgendamentoForm() {
   useEffect(() => {
     if (aba !== 'locais') return
     if (!dados.date || opcoes.retirada.length === 0 || opcoes.devolucao.length === 0) return
-    if (opcoes.locais.length === 0) return
+    const locaisExclusivosGuard = opcoes.locais.filter((l) => (l.categoria ?? 'Local exclusivo') !== 'Sala de aula')
+    if (locaisExclusivosGuard.length === 0) return
     let cancelado = false
+
+    const locaisExclusivos = opcoes.locais.filter((l) => (l.categoria ?? 'Local exclusivo') !== 'Sala de aula')
 
     async function carregarMatriz() {
       if (!cancelado) {
@@ -450,7 +453,7 @@ function AgendamentoForm() {
             return {
               slot,
               semHorario,
-              celulas: opcoes.locais.map((l) => ({
+              celulas: locaisExclusivos.map((l) => ({
                 localId: l.id,
                 ocupado: null,
                 por: null,
@@ -466,7 +469,7 @@ function AgendamentoForm() {
       for (const slot of SLOTS_DO_DIA) {
         const retId = idPorHorario(opcoes.retirada, slot.inicio)
         const devId = idPorHorario(opcoes.devolucao, slot.fim)
-        for (const l of opcoes.locais) {
+        for (const l of locaisExclusivos) {
           pares.push({ retId, devId, localId: l.id })
         }
       }
@@ -487,7 +490,7 @@ function AgendamentoForm() {
       setTabelaLocais(
         SLOTS_DO_DIA.map((slot) => {
           const semHorario = !idPorHorario(opcoes.retirada, slot.inicio) || !idPorHorario(opcoes.devolucao, slot.fim)
-          const celulas = opcoes.locais.map((l) => {
+          const celulas = locaisExclusivos.map((l) => {
             const r = resultados[k++]
             if (semHorario || r.status === 'rejected') {
               return { localId: l.id, ocupado: null, por: null, carregando: false, erro: !semHorario, semHorario }
@@ -734,7 +737,7 @@ function AgendamentoForm() {
                 <thead>
                   <tr>
                     <th scope="col">Horário</th>
-                    <th scope="col" colSpan={Math.max(opcoes.locais.length, 1)}>Disponibilidade</th>
+                    <th scope="col" colSpan={Math.max(opcoes.locais.filter((l) => (l.categoria ?? 'Local exclusivo') !== 'Sala de aula').length, 1)}>Disponibilidade</th>
                   </tr>
                 </thead>
                 <tbody>

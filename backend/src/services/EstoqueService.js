@@ -12,6 +12,7 @@ const { ESTOQUE_TOTAL } = require('../config/estoque');
 const { horario_retirada, horarios_devolução } = require('../model/HorariosModel');
 const Agendamento = require('../model/AgendamentoModel');
 const Capacidade = require('../model/CapacidadeModel');
+const local = require('../model/LocalModel');
 
 const STATUS_OCUPANTES = ['Pendente', 'Em progresso', 'Finalizado'];
 
@@ -101,6 +102,12 @@ async function checkDisponibilidade(date, data_retirada, data_devolucao, quantid
 // Trava de local exclusivo: mesmo date + mesmo local_id + intervalo sobreposto.
 async function getOcupacaoLocal(date, local_id, data_retirada, data_devolucao, opts = {}) {
   const { retT, devT } = await resolveIntervalo(data_retirada, data_devolucao);
+
+  // Locais do tipo "Sala de aula" não são exclusivos: nunca aparecem como ocupados.
+  const localRow = await local.findByPk(local_id, { transaction: opts.transaction || undefined });
+  if (localRow && localRow.categoria === 'Sala de aula') {
+    return { ocupado: false, por: null, retirada: retT, devolucao: devT };
+  }
 
   const [rets, devs, ags] = await Promise.all([
     horario_retirada.findAll({ transaction: opts.transaction || undefined }),
