@@ -539,6 +539,7 @@ function AgendamentoForm() {
   }, [dados.date, dados.data_retirada, dados.data_devolucao, dados.Local])
 
   const intervaloCompleto = Boolean(dados.date && dados.data_retirada && dados.data_devolucao)
+  const dataPassada = Boolean(dados.date && dados.date < hoje())
   const disp = intervaloCompleto ? disponibilidade : null
 
   function validar(): string | null {
@@ -733,7 +734,8 @@ function AgendamentoForm() {
 
           {aba === 'locais' && (
             <div role="tabpanel" aria-label="Disponibilidade por local">
-              <table className="agendar-tabela agendar-tabela--matriz">
+              <div className="agendar-tabela__rolagem">
+                <table className="agendar-tabela agendar-tabela--matriz">
                 <thead>
                   <tr>
                     <th scope="col">Horário</th>
@@ -765,6 +767,7 @@ function AgendamentoForm() {
                   ))}
                 </tbody>
               </table>
+              </div>
             </div>
           )}
         </section>
@@ -773,8 +776,13 @@ function AgendamentoForm() {
         <section className="agendar-painel agendar-painel--form" aria-labelledby="agendar-titulo">
           <h2 id="agendar-titulo">Agendar</h2>
 
-          {erro && <p className="alerta alerta--erro">{erro}</p>}
-          {sucesso && (
+           {erro && <p className="alerta alerta--erro">{erro}</p>}
+           {dataPassada && (
+             <p className="alerta alerta--aviso">
+               Atenção: você esta visualizando uma data anterior à data atual.
+             </p>
+           )}
+           {sucesso && (
             <p className="alerta alerta--sucesso">
               {sucesso.texto}
               {sucesso.agendamentoId && (

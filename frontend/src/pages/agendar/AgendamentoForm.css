@@ -329,6 +329,12 @@
   min-width: 0;
 }
 
+.agendar-tabela__rolagem {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .agendar-tabela {
   width: 100%;
   border-collapse: separate;
@@ -338,7 +344,29 @@
 }
 
 .agendar-tabela--matriz {
-  min-width: 0;
+  table-layout: auto;
+  min-width: max-content;
+  border-spacing: 12px 12px;
+}
+.agendar-tabela--matriz thead th,
+.agendar-tabela--matriz tbody td {
+  min-width: 100px;
+}
+.agendar-tabela--matriz thead th:first-child,
+.agendar-tabela--matriz tbody td:first-child {
+  min-width: 120px;
+}
+
+.agendar-tabela--matriz thead th:first-child,
+.agendar-tabela--matriz tbody td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.agendar-tabela--matriz thead th:first-child {
+  z-index: 4;
 }
 
 .agendar-tabela thead th {
@@ -594,6 +622,12 @@ td:first-child .celula {
   border: 1px solid #2e7d32;
 }
 
+.alerta--aviso {
+  background: rgba(255, 241, 118, 0.45);
+  border: 1px solid #c9b400;
+  color: var(--ag-ink);
+}
+
 .agendar-aviso {
   margin: 40px auto;
   padding: 16px 20px;
@@ -833,6 +867,20 @@ td:first-child .celula {
   .agendar-tabela--matriz .celula--local {
     width: 100%;
     box-sizing: border-box;
+  }
+
+  .agendar-tabela__rolagem {
+    overflow-x: visible;
+  }
+
+  .agendar-tabela--matriz {
+    min-width: 0;
+  }
+
+  .agendar-tabela--matriz thead th:first-child,
+  .agendar-tabela--matriz tbody td:first-child {
+    position: static;
+    background: transparent;
   }
 }
 
