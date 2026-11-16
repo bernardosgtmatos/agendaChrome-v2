@@ -376,10 +376,14 @@ function AgendamentoForm() {
     if (!dados.date || opcoes.retirada.length === 0 || opcoes.devolucao.length === 0) {
       return
     }
+    const locaisExclusivos =
+      aba === 'locais'
+        ? opcoes.locais.filter((l) => (l.categoria ?? 'Local exclusivo') !== 'Sala de aula')
+        : []
     let cancelado = false
 
-    async function carregarTabela() {
-      if (!cancelado) {
+    async function carregarMatriz() {
+      if (aba !== 'locais') {
         setTabela(
           SLOTS_DO_DIA.map((slot) => {
             const semHorario = !idPorHorario(opcoes.retirada, slot.inicio) || !idPorHorario(opcoes.devolucao, slot.fim)
@@ -394,59 +398,7 @@ function AgendamentoForm() {
             }
           }),
         )
-      }
-
-      const resultados = await Promise.allSettled(
-        SLOTS_DO_DIA.map((slot) => {
-          const retId = idPorHorario(opcoes.retirada, slot.inicio)
-          const devId = idPorHorario(opcoes.devolucao, slot.fim)
-          if (!retId || !devId) return Promise.reject(new Error('horário ausente'))
-          const params = new URLSearchParams({
-            date: dados.date,
-            data_retirada: retId,
-            data_devolucao: devId,
-          })
-          return getJson<Disponibilidade>(`events/disponibilidade?${params.toString()}`)
-        }),
-      )
-      if (cancelado) return
-      setTabela(
-        SLOTS_DO_DIA.map((slot, i) => {
-          const r = resultados[i]
-          const semHorario = !idPorHorario(opcoes.retirada, slot.inicio) || !idPorHorario(opcoes.devolucao, slot.fim)
-          if (semHorario || r.status === 'rejected') {
-            return { slot, total: null, ocupado: null, disponivel: null, carregando: false, semHorario, erro: !semHorario }
-          }
-          return {
-            slot,
-            total: r.value.total,
-            ocupado: r.value.ocupado,
-            disponivel: r.value.disponivel,
-            carregando: false,
-            semHorario: false,
-            erro: false,
-          }
-        }),
-      )
-    }
-
-    carregarTabela()
-    return () => {
-      cancelado = true
-    }
-  }, [dados.date, opcoes.retirada, opcoes.devolucao])
-
-  useEffect(() => {
-    if (aba !== 'locais') return
-    if (!dados.date || opcoes.retirada.length === 0 || opcoes.devolucao.length === 0) return
-    const locaisExclusivosGuard = opcoes.locais.filter((l) => (l.categoria ?? 'Local exclusivo') !== 'Sala de aula')
-    if (locaisExclusivosGuard.length === 0) return
-    let cancelado = false
-
-    const locaisExclusivos = opcoes.locais.filter((l) => (l.categoria ?? 'Local exclusivo') !== 'Sala de aula')
-
-    async function carregarMatriz() {
-      if (!cancelado) {
+      } else {
         setTabelaLocais(
           SLOTS_DO_DIA.map((slot) => {
             const semHorario = !idPorHorario(opcoes.retirada, slot.inicio) || !idPorHorario(opcoes.devolucao, slot.fim)
@@ -465,48 +417,108 @@ function AgendamentoForm() {
           }),
         )
       }
-      const pares: { retId: string | null; devId: string | null; localId: string }[] = []
-      for (const slot of SLOTS_DO_DIA) {
-        const retId = idPorHorario(opcoes.retirada, slot.inicio)
-        const devId = idPorHorario(opcoes.devolucao, slot.fim)
-        for (const l of locaisExclusivos) {
-          pares.push({ retId, devId, localId: l.id })
-        }
-      }
-      const resultados = await Promise.allSettled(
-        pares.map((p) => {
-          if (!p.retId || !p.devId) return Promise.reject(new Error('horário ausente'))
-          const params = new URLSearchParams({
-            date: dados.date,
-            data_retirada: p.retId,
-            data_devolucao: p.devId,
-            local_id: p.localId,
-          })
-          return getJson<Disponibilidade>(`events/disponibilidade?${params.toString()}`)
-        }),
-      )
-      if (cancelado) return
-      let k = 0
-      setTabelaLocais(
-        SLOTS_DO_DIA.map((slot) => {
-          const semHorario = !idPorHorario(opcoes.retirada, slot.inicio) || !idPorHorario(opcoes.devolucao, slot.fim)
-          const celulas = locaisExclusivos.map((l) => {
-            const r = resultados[k++]
-            if (semHorario || r.status === 'rejected') {
-              return { localId: l.id, ocupado: null, por: null, carregando: false, erro: !semHorario, semHorario }
+      try {
+        const resposta = await postJson<{
+          slots: {
+            inicio: string
+            fim: string
+            semHorario: boolean
+            total: number | null
+            ocupado: number | null
+            disponivel: number | null
+            retirada: string
+            devolucao: string
+          }[]
+          locais: Record<
+            string,
+            {
+              inicio: string
+              fim: string
+              semHorario: boolean
+              ocupado: boolean | null
+              por: OcupacaoLocal['por']
+              retirada: string
+              devolucao: string
+              erro: boolean
+            }[]
+          >
+        }>('events/disponibilidade-matriz', {
+          date: dados.date,
+          slots: SLOTS_DO_DIA.map((slot) => ({ inicio: slot.inicio, fim: slot.fim })),
+          local_ids: locaisExclusivos.map((l) => l.id),
+        })
+        if (cancelado) return
+
+        setTabela(
+          SLOTS_DO_DIA.map((slot, i) => {
+            const r = resposta.slots[i]
+            const semHorario = Boolean(r?.semHorario)
+            if (semHorario || r?.total === null) {
+              return {
+                slot,
+                total: null,
+                ocupado: null,
+                disponivel: null,
+                carregando: false,
+                semHorario,
+                erro: !semHorario && r?.total === null,
+              }
             }
             return {
-              localId: l.id,
-              ocupado: r.value.local ? r.value.local.ocupado : false,
-              por: r.value.local ? r.value.local.por : null,
+              slot,
+              total: r.total,
+              ocupado: r.ocupado,
+              disponivel: r.disponivel,
               carregando: false,
-              erro: false,
               semHorario: false,
+              erro: false,
             }
-          })
-          return { slot, celulas, semHorario }
-        }),
-      )
+          }),
+        )
+
+        if (aba === 'locais') {
+          setTabelaLocais(
+            SLOTS_DO_DIA.map((slot, i) => {
+              const semHorario = !idPorHorario(opcoes.retirada, slot.inicio) || !idPorHorario(opcoes.devolucao, slot.fim)
+              const celulas = locaisExclusivos.map((l) => {
+                const r = resposta.locais[l.id]?.[i]
+                if (semHorario || r?.semHorario) {
+                  return {
+                    localId: l.id,
+                    ocupado: null,
+                    por: null,
+                    carregando: false,
+                    erro: !semHorario,
+                    semHorario,
+                  }
+                }
+                return {
+                  localId: l.id,
+                  ocupado: r.ocupado ?? false,
+                  por: r.por ?? null,
+                  carregando: false,
+                  erro: false,
+                  semHorario: false,
+                }
+              })
+              return { slot, celulas, semHorario }
+            }),
+          )
+        }
+      } catch {
+        if (cancelado) return
+        setTabela((atual) =>
+          atual.map((linha) => ({ ...linha, carregando: false, erro: !linha.semHorario })),
+        )
+        if (aba === 'locais') {
+          setTabelaLocais((atual) =>
+            atual.map((linha) => ({
+              ...linha,
+              celulas: linha.celulas.map((cel) => ({ ...cel, carregando: false, erro: !cel.semHorario })),
+            })),
+          )
+        }
+      }
     }
 
     carregarMatriz()

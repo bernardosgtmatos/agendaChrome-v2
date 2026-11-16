@@ -175,4 +175,97 @@ const getDisponibilidade = async (req,res) => {
     }
 }
 
-module.exports = {ListHorarios_ret,ListHorarios_devol,ListTurmas,listLocal,listUsers,listAgend,getDisponibilidade}
+
+const getDisponibilidadeMatriz = async (req, res) => {
+    const { date, slots, local_ids } = req.body || {}
+    if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        return res.status(400).json({ message: 'date deve estar no formato YYYY-MM-DD' })
+    }
+    if (!Array.isArray(slots) || slots.length === 0) {
+        return res.status(400).json({ message: 'Informe ao menos um slot.' })
+    }
+    const idsLocais = Array.isArray(local_ids) ? local_ids.map(String) : []
+    try {
+        const [rets, devs] = await Promise.all([
+            horario_retirada.findAll(),
+            horarios_devolução.findAll(),
+        ])
+        const mapR = new Map(rets.map((r) => [String(r.horario_retirada).slice(0, 5), r.id]))
+        const mapD = new Map(devs.map((d) => [String(d['horarios_devolução']).slice(0, 5), d.id]))
+
+        const resultadoSlots = []
+        const resultadoLocais = {}
+        for (const id of idsLocais) resultadoLocais[id] = []
+
+        for (const slot of slots) {
+            const inicio = String(slot.inicio || '').slice(0, 5)
+            const fim = String(slot.fim || '').slice(0, 5)
+            const retId = mapR.get(inicio)
+            const devId = mapD.get(fim)
+
+            if (!retId || !devId) {
+                resultadoSlots.push({
+                    inicio,
+                    fim,
+                    semHorario: true,
+                    total: null,
+                    ocupado: null,
+                    disponivel: null,
+                    retirada: inicio,
+                    devolucao: fim,
+                })
+                for (const id of idsLocais) {
+                    resultadoLocais[id].push({
+                        inicio,
+                        fim,
+                        semHorario: true,
+                        ocupado: null,
+                        por: null,
+                        retirada: inicio,
+                        devolucao: fim,
+                        erro: false,
+                    })
+                }
+                continue
+            }
+
+            const info = await getOcupacao(date, retId, devId)
+            resultadoSlots.push({
+                inicio,
+                fim,
+                semHorario: false,
+                total: info.total,
+                ocupado: info.ocupado,
+                disponivel: info.disponivel,
+                retirada: info.retirada,
+                devolucao: info.devolucao,
+            })
+
+            for (const id of idsLocais) {
+                const localInfo = await getOcupacaoLocal(date, id, retId, devId)
+                resultadoLocais[id].push({
+                    inicio,
+                    fim,
+                    semHorario: false,
+                    ocupado: localInfo.ocupado,
+                    por: localInfo.por,
+                    retirada: localInfo.retirada,
+                    devolucao: localInfo.devolucao,
+                    erro: false,
+                })
+            }
+        }
+
+        return res.status(200).json({
+            date,
+            slots: resultadoSlots,
+            locais: resultadoLocais,
+        })
+    } catch (error) {
+        return res.status(error.status || 500).json({
+            message: error.message || 'Erro ao calcular disponibilidade.',
+        })
+    }
+}
+
+module.exports = {ListHorarios_ret,ListHorarios_devol,ListTurmas,listLocal,listUsers,listAgend,getDisponibilidade,getDisponibilidadeMatriz}

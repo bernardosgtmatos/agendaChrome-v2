@@ -1,5 +1,5 @@
 const express = require('express')
-const {ListHorarios_ret,ListHorarios_devol,ListTurmas,listLocal,listUsers, listAgend, getDisponibilidade} = require('../controllers/EventsController')
+const {ListHorarios_ret,ListHorarios_devol,ListTurmas,listLocal,listUsers, listAgend, getDisponibilidade, getDisponibilidadeMatriz} = require('../controllers/EventsController')
 
 const EventRoute = express()
 
@@ -10,5 +10,6 @@ EventRoute.get('/listLocal',listLocal)
 EventRoute.get('/listUsers',listUsers)
 EventRoute.get('/listAgend',listAgend)
 EventRoute.get('/disponibilidade',getDisponibilidade)
+EventRoute.post('/disponibilidade-matriz',getDisponibilidadeMatriz)
 
 module.exports = EventRoute
