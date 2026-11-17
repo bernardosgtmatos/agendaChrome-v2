@@ -5,10 +5,11 @@ const COOKIE_MAX_AGE = 604800000
 const TOKEN_TTL = '7d'
 
 function opcoesCookie() {
+    const producao = process.env.NODE_ENV === 'production'
     return {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
+        secure: producao,
+        sameSite: producao ? 'none' : 'strict',
         maxAge: COOKIE_MAX_AGE
     }
 }

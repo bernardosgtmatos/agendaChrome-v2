@@ -37,8 +37,10 @@ Admin.beforeCreate(async (user) => {
 })
 
 Admin.beforeUpdate(async (user) => {
-    const salt = await bcrypt.genSalt(10)
-    user.senha = await bcrypt.hash(user.senha, salt)
+    if (user.changed('senha')) {
+        const salt = await bcrypt.genSalt(10)
+        user.senha = await bcrypt.hash(user.senha, salt)
+    }
 })
 
 Admin.prototype.validSenha = async function (senha) {

@@ -12,13 +12,29 @@ const rateLimiter = require('./src/middleware/RateLimit.js')
 const port = process.env.PORT || 5000
 
 //middleware
+const origensPermitidas = [process.env.FRONTEND_URL ?? 'http://localhost:5173', process.env.DEV_URL].filter(Boolean)
 app.use(cors({
-  origin:[ process.env.FRONTEND_URL ?? 'http://localhost:5173', process.env.DEV_URL],
+  origin: origensPermitidas,
   credentials: true,
 }))
 app.use(express.json())
 app.use(cookieParser())
 app.use(rateLimiter)
+
+app.get('/health', (_req, res) => res.status(200).json({ status: 'ok' }))
+
+app.get('/internal/sincronizar-status', async (req, res) => {
+    if (!process.env.CRON_SECRET || req.headers['x-cron-secret'] !== process.env.CRON_SECRET) {
+        return res.status(401).json({ message: 'Não autorizado.' })
+    }
+    try {
+        const total = await finalizarAgendamentosPassados()
+        return res.status(200).json({ finalizados: total })
+    } catch (error) {
+        console.error(error)
+        return res.status(500).json({ message: 'Erro ao sincronizar status.' })
+    }
+})
 
 //rotas import
 const AdminRoute = require('./src/routes/AdminRoute.js')

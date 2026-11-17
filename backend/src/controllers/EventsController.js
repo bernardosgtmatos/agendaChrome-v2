@@ -113,13 +113,15 @@ const listAgend = async (req,res) => {
         if (local && local !== 'todos' && local !== 'all') where.local_id = local
         if (q && String(q).trim()) {
             const termo = String(q).trim()
+            const termoLower = String(termo).trim().toLowerCase()
             const usuarios = await Usuario.findAll({
-                where: { nome: { [Op.like]: `%${termo}%` } },
+                where: sequelize.where(sequelize.fn('lower', sequelize.col('nome')), 'LIKE', `%${termoLower}%`),
                 attributes: ['id'],
                 limit: 200,
             })
             const ids = usuarios.map((u) => u.id)
-            const condicoes = [{ id: { [Op.like]: `${termo}%` } }]
+            const termoLower2 = String(termo).trim().toLowerCase()
+            const condicoes = [sequelize.where(sequelize.fn('lower', sequelize.col('id')), 'LIKE', `${termoLower2}%`)]
             if (ids.length) condicoes.push({ usuario_id: { [Op.in]: ids } })
             where[Op.or] = condicoes
         }

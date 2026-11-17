@@ -277,9 +277,9 @@ const listMeusAgendamentos = async (req, res) => {
         if (turma && turma !== 'todos' && turma !== 'all') whereClause.turma = turma
         if (local && local !== 'todos' && local !== 'all') whereClause.local_id = local
         if (q && String(q).trim()) {
-            const termo = String(q).trim()
-            const condicoes = [{ id: { [Op.like]: `${termo}%` } }]
-            condicoes.push({ observacao: { [Op.like]: `%${termo}%` } })
+            const termo = String(q).trim().toLowerCase()
+            const condicoes = [sequelize.where(sequelize.fn('lower', sequelize.col('id')), 'LIKE', `${termo}%`)]
+            condicoes.push(sequelize.where(sequelize.fn('lower', sequelize.col('observacao')), 'LIKE', `%${termo}%`))
             whereClause[Op.or] = condicoes
         }
 
