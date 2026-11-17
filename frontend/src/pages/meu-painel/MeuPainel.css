@@ -433,7 +433,7 @@
 
 .meu-painel__grupo {
   background: var(--painel-card);
-  border: 1px solid var(--painel-stroke);
+  /* border: 1px solid var(--painel-stroke); */
   border-radius: 21px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
   overflow: hidden;
@@ -773,13 +773,27 @@
     opacity: 0.65;
   }
   .meu-painel__paginacao {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 10px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
   }
   .meu-painel__paginacao button {
-    width: 100%;
-    min-height: 48px;
+    width: auto;
+    min-height: 34px;
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+  .meu-painel__paginacao span {
+    flex-basis: auto;
+    text-align: center;
+  }
+  .meu-painel__ir-pagina input {
+    width: 56px;
+    min-height: 34px;
+    padding: 0 8px;
+    font-size: 12px;
   }
 }
 

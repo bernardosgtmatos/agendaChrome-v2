@@ -528,13 +528,13 @@
 
   .agendamento-lista__paginacao button {
     width: auto;
-    min-height: 40px;
-    padding: 8px 14px;
-    font-size: 13px;
+    min-height: 34px;
+    padding: 6px 10px;
+    font-size: 12px;
   }
 
   .agendamento-lista__pagina {
-    flex-basis: 100%;
+    flex-basis: auto;
     text-align: center;
   }
 }
