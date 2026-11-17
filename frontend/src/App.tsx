@@ -3,6 +3,7 @@ import NavBar from './components/NavBar.tsx'
 import { useAuth } from './lib/useAuth.ts'
 import AgendamentoForm from './pages/agendar/AgendamentoForm.tsx'
 import AgendamentoListagem from './pages/agendamentos/AgendamentoListagem.tsx'
+import MeuPainel from './pages/meu-painel/MeuPainel.tsx'
 import Gerenciamento from './pages/gerenciamento/Gerenciamento.tsx'
 import Login from './pages/login/Login.tsx'
 import RecuperarSenha from './pages/recuperar-senha/RecuperarSenha.tsx'
@@ -11,7 +12,7 @@ import './App.css'
 
 function Layout() {
   const location = useLocation()
-  const semNavBar = location.pathname === '/agendar' || location.pathname === '/gerenciamento'
+  const semNavBar = location.pathname === '/agendar' || location.pathname === '/gerenciamento' || location.pathname === '/meu-painel'
   return (
     <>
       <div className="user-bar-spacer">
@@ -76,6 +77,7 @@ function App() {
         <Route element={<Layout />}>
           <Route path="/agendar" element={<AgendamentoForm />} />
           <Route path="/agendamentos" element={<AgendamentoListagem />} />
+          <Route path="/meu-painel" element={<MeuPainel />} />
           <Route element={<RequireAdmin />}>
             <Route path="/gerenciamento" element={<Gerenciamento />} />
           </Route>

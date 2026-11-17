@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { patchJson } from '../lib/api.ts'
 import { useAuth } from '../lib/useAuth.ts'
@@ -9,6 +9,16 @@ function IconeEngrenagem() {
     <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <circle cx="12" cy="12" r="3" />
       <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+    </svg>
+  )
+}
+
+function IconeMeusAgendamentos() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="3" y="4" width="18" height="18" rx="2" />
+      <path d="M16 2v4M8 2v4M3 10h18" />
+      <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01" />
     </svg>
   )
 }
@@ -43,7 +53,9 @@ function IconeSair() {
   )
 }
 
-function UserMenu() {
+export type UserMenuHandle = { abrir: () => void }
+
+const UserMenu = forwardRef<UserMenuHandle>((_props, ref) => {
   const { usuario, sair } = useAuth()
   const navigate = useNavigate()
   const [menuAberto, setMenuAberto] = useState(false)
@@ -60,6 +72,12 @@ function UserMenu() {
   const menuRef = useRef<HTMLElement>(null)
   const campoAtualRef = useRef<HTMLInputElement>(null)
   const menuEstavaAberto = useRef(false)
+
+  function abrirMenu() {
+    setMenuAberto(true)
+  }
+
+  useImperativeHandle(ref, () => ({ abrir: abrirMenu }), [])
 
   const inicial = (usuario?.nome ?? 'U').trim().charAt(0).toUpperCase() || 'U'
 
@@ -147,6 +165,11 @@ function UserMenu() {
     navigate('/gerenciamento')
   }
 
+  function abrirMeuPainel() {
+    setMenuAberto(false)
+    navigate('/meu-painel')
+  }
+
   async function aoSair() {
     setSaindo(true)
     try {
@@ -195,12 +218,12 @@ function UserMenu() {
   }
 
   return (
-    <div className="user-menu">
+    <div className="user-menu" onClick={(evento) => evento.stopPropagation()}>
       <button
         ref={botaoRef}
         type="button"
         className="user-menu__botao"
-        onClick={() => setMenuAberto(true)}
+        onClick={abrirMenu}
         aria-label="Abrir menu do usuário"
         aria-haspopup="dialog"
         aria-expanded={menuAberto}
@@ -240,6 +263,16 @@ function UserMenu() {
         </div>
 
         <nav className="user-menu__opcoes" aria-label="Menu do usuário">
+          <button type="button" className="user-menu__opcao" onClick={abrirMeuPainel}>
+            <span className="user-menu__opcao-icone" aria-hidden="true">
+              <IconeMeusAgendamentos />
+            </span>
+            <span className="user-menu__opcao-texto">
+              <strong>Meus agendamentos</strong>
+              <small>Painel pessoal e agenda</small>
+            </span>
+          </button>
+
           <button type="button" className="user-menu__opcao" onClick={abrirConfiguracoes}>
             <span className="user-menu__opcao-icone" aria-hidden="true">
               <IconeConfiguracoes />
@@ -375,6 +408,6 @@ function UserMenu() {
       </div>
     </div>
   )
-}
+})
 
 export default UserMenu

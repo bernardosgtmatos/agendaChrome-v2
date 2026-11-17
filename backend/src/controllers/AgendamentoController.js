@@ -1,5 +1,5 @@
 
-const { where } = require("sequelize")
+const { where, Op } = require("sequelize")
 const sequelize = require("../config/Database")
 const { horario_retirada, horarios_devolução } = require("../model/HorariosModel")
 const Turmas = require("../model/TurmasModel")
@@ -259,4 +259,106 @@ const cancelarAgendamento = async (req,res) => {
         })
     }
 }
-module.exports = {Novoagendamento, listAgendamentos, cancelarAgendamento}
+const listMeusAgendamentos = async (req, res) => {
+    try {
+        await finalizarAgendamentosPassados().catch((erro) => {
+            console.error('erro ao sincronizar status de agendamentos:', erro)
+        })
+        const usuario_id = req.user.id
+        const { p, l, q, status, turma, local } = req.query
+
+        let page = Number(p)
+        let limit = Number(l)
+        if (!Number.isInteger(page) || page <= 0) page = 1
+        if (!Number.isInteger(limit) || limit <= 0 || limit > 500) limit = 10
+
+        const whereClause = { usuario_id }
+        if (status && status !== 'todos' && status !== 'all') whereClause.status = status
+        if (turma && turma !== 'todos' && turma !== 'all') whereClause.turma = turma
+        if (local && local !== 'todos' && local !== 'all') whereClause.local_id = local
+        if (q && String(q).trim()) {
+            const termo = String(q).trim()
+            const condicoes = [{ id: { [Op.like]: `${termo}%` } }]
+            condicoes.push({ observacao: { [Op.like]: `%${termo}%` } })
+            whereClause[Op.or] = condicoes
+        }
+
+        const offset = (page - 1) * limit
+        const { rows, count } = await Agendamento.findAndCountAll({
+            where: whereClause,
+            limit,
+            offset,
+            order: [['date', 'DESC'], ['createdAt', 'DESC']],
+        })
+        const totalPages = Math.ceil(count / limit) || 1
+        return res.status(200).json({
+            meta: {
+                total: count,
+                page,
+                limit,
+                totalPages,
+                hasNext: page < totalPages,
+                hasPrev: page > 1,
+            },
+            lista: rows,
+        })
+    } catch (error) {
+        console.error(error)
+        return res.status(500).json({
+            message: 'erro ao tentar listar seus agendamentos',
+            error: error.message,
+        })
+    }
+}
+
+const resumoMeusAgendamentos = async (req, res) => {
+    try {
+        await finalizarAgendamentosPassados().catch((erro) => {
+            console.error('erro ao sincronizar status de agendamentos:', erro)
+        })
+        const usuario_id = req.user.id
+        const hoje = new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' })
+
+        const [total, pendente, emProgresso, finalizado, cancelado, proximos] = await Promise.all([
+            Agendamento.count({ where: { usuario_id } }),
+            Agendamento.count({ where: { usuario_id, status: 'Pendente' } }),
+            Agendamento.count({ where: { usuario_id, status: 'Em progresso' } }),
+            Agendamento.count({ where: { usuario_id, status: 'Finalizado' } }),
+            Agendamento.count({ where: { usuario_id, status: 'Cancelado' } }),
+            Agendamento.count({
+                where: {
+                    usuario_id,
+                    status: { [Op.in]: ['Pendente', 'Em progresso'] },
+                    date: { [Op.gte]: hoje },
+                },
+            }),
+        ])
+
+        const proximo = await Agendamento.findOne({
+            where: {
+                usuario_id,
+                status: { [Op.in]: ['Pendente', 'Em progresso'] },
+                date: { [Op.gte]: hoje },
+            },
+            order: [['date', 'ASC'], ['createdAt', 'ASC']],
+        })
+
+        return res.status(200).json({
+            total,
+            pendente,
+            emProgresso,
+            finalizado,
+            cancelado,
+            proximos,
+            proximoId: proximo ? proximo.id : null,
+        })
+    } catch (error) {
+        console.error(error)
+        return res.status(500).json({
+            message: 'erro ao tentar resumir seus agendamentos',
+            error: error.message,
+        })
+    }
+}
+
+module.exports = { Novoagendamento, listAgendamentos, cancelarAgendamento, listMeusAgendamentos, resumoMeusAgendamentos }

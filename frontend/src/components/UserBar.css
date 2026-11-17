@@ -6,6 +6,7 @@
   border-radius: 0 0 18px 18px;
   padding: 8px 14px;
   font-size: 15px;
+  cursor: pointer;
 }
 
 .user-bar-spacer {

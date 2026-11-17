@@ -1,5 +1,5 @@
 const express = require('express')
-const {Novoagendamento, listAgendamentos, cancelarAgendamento} = require('../controllers/AgendamentoController')
+const {Novoagendamento, listAgendamentos, cancelarAgendamento, listMeusAgendamentos, resumoMeusAgendamentos} = require('../controllers/AgendamentoController')
 const auth = require('../middleware/Authorization')
 const { login, me, logout, alterarSenha } = require('../controllers/UserControllers')
 const { solicitarCodigo, verificarCodigo, redefinirSenha } = require('../controllers/PasswordResetController')
@@ -15,4 +15,6 @@ UserRoute.post('/redefinir-senha',redefinirSenha)
 UserRoute.post('/NovoAgendamento',auth,Novoagendamento)
 UserRoute.post('/cancelarAgendamento',auth,cancelarAgendamento)
 UserRoute.get('/ListAgendamentos', listAgendamentos)
+UserRoute.get('/meusAgendamentos', auth, listMeusAgendamentos)
+UserRoute.get('/resumoAgendamentos', auth, resumoMeusAgendamentos)
 module.exports = UserRoute

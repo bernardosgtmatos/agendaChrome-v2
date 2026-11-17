@@ -519,14 +519,23 @@
   }
 
   .agendamento-lista__paginacao {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 10px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
   }
 
   .agendamento-lista__paginacao button {
-    width: 100%;
-    min-height: 48px;
+    width: auto;
+    min-height: 40px;
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+
+  .agendamento-lista__pagina {
+    flex-basis: 100%;
+    text-align: center;
   }
 }
 
