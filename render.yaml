@@ -35,21 +35,6 @@ services:
       - key: SMTP_FROM
         sync: false
 
-  - type: cron
-    name: agendachrome-sync-status
-    runtime: node
-    rootDir: backend
-    schedule: "*/5 * * * *"
-    buildCommand: npm install
-    startCommand: node scripts/sync-status-cron.js
-    envVars:
-      - key: NODE_VERSION
-        value: "22"
-      - key: BACKEND_URL
-        sync: false
-      - key: CRON_SECRET
-        sync: false
-
   - type: web
     name: agendachrome-frontend
     runtime: static
