@@ -11,8 +11,20 @@ const rateLimiter = require('./src/middleware/RateLimit.js')
 
 const port = process.env.PORT || 5000
 
+app.set('trust proxy', 1)
+
 //middleware
-const origensPermitidas = [process.env.FRONTEND_URL ?? 'http://localhost:5173', process.env.DEV_URL].filter(Boolean)
+function normalizarOrigem(valor) {
+    return String(valor || '')
+        .split(',')
+        .map((item) => item.trim().replace(/^['"]|['"]$/g, '').replace(/\/+$/, ''))
+        .filter(Boolean)
+}
+
+const origensPermitidas = [
+    ...normalizarOrigem(process.env.FRONTEND_URL || 'http://localhost:5173'),
+    ...normalizarOrigem(process.env.DEV_URL),
+]
 app.use(cors({
   origin: origensPermitidas,
   credentials: true,

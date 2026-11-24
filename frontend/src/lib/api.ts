@@ -1,5 +1,32 @@
 export const API_BASE = import.meta.env.VITE_API_URL ?? (import.meta.env.DEV ? `http://${window.location.hostname}:5000` : '')
 
+const CHAVE_TOKEN = 'agendaChrome_token'
+
+export function obterToken(): string | null {
+  try {
+    return localStorage.getItem(CHAVE_TOKEN)
+  } catch {
+    return null
+  }
+}
+
+export function salvarToken(token: string | null | undefined) {
+  try {
+    if (token) localStorage.setItem(CHAVE_TOKEN, token)
+    else localStorage.removeItem(CHAVE_TOKEN)
+  } catch {
+    // ignore
+  }
+}
+
+function headersAuth(base?: HeadersInit): HeadersInit {
+  const token = obterToken()
+  const headers: Record<string, string> = {}
+  if (base) Object.assign(headers, base as Record<string, string>)
+  if (token) headers.Authorization = `Bearer ${token}`
+  return headers
+}
+
 export class RateLimitError extends Error {
   retryAfter?: number
 
@@ -24,6 +51,7 @@ async function lerMensagemErro(resposta: Response): Promise<string> {
 export async function getJson<T>(caminho: string): Promise<T> {
   const resposta = await fetch(`${API_BASE}/${caminho}`, {
     credentials: 'include',
+    headers: headersAuth(),
   })
   if (!resposta.ok) {
     if (resposta.status === 429) {
@@ -45,7 +73,7 @@ async function enviarJson<T>(
 ): Promise<T> {
   const resposta = await fetch(`${API_BASE}/${caminho}`, {
     method: metodo,
-    headers: corpo === undefined ? undefined : { 'Content-Type': 'application/json' },
+    headers: headersAuth(corpo === undefined ? undefined : { 'Content-Type': 'application/json' }),
     credentials: 'include',
     body: corpo === undefined ? undefined : JSON.stringify(corpo),
   })
@@ -53,6 +81,10 @@ async function enviarJson<T>(
     | T
     | { message?: string; retryAfter?: number }
     | null
+  if (dados && typeof dados === 'object' && 'token' in (dados as Record<string, unknown>)) {
+    salvarToken((dados as { token?: string }).token)
+  }
+  if (resposta.status === 401) salvarToken(null)
   if (!resposta.ok) {
     if (resposta.status === 429) {
       const corpo = dados as { message?: string; retryAfter?: number } | null
@@ -95,26 +127,31 @@ export type UsuarioSessao = {
 export async function loginApi(email: string, senha: string): Promise<void> {
   const resposta = await fetch(`${API_BASE}/usuario/login`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: headersAuth({ 'Content-Type': 'application/json' }),
     credentials: 'include',
     body: JSON.stringify({ email, senha }),
   })
+  const dados = (await resposta.json().catch(() => null)) as { message?: string; token?: string; retryAfter?: number } | null
+  if (dados?.token) salvarToken(dados.token)
   if (!resposta.ok) {
     if (resposta.status === 429) {
-      const corpo = (await resposta.json().catch(() => null)) as { message?: string; retryAfter?: number } | null
       throw new RateLimitError(
-        typeof corpo?.message === 'string' ? corpo.message : 'Muitas requisições. Tente novamente em instantes.',
-        typeof corpo?.retryAfter === 'number' ? corpo.retryAfter : undefined,
+        typeof dados?.message === 'string' ? dados.message : 'Muitas requisições. Tente novamente em instantes.',
+        typeof dados?.retryAfter === 'number' ? dados.retryAfter : undefined,
       )
     }
-    throw new Error(await lerMensagemErro(resposta))
+    throw new Error(
+      typeof dados?.message === 'string' ? dados.message : `a API respondeu ${resposta.status}`,
+    )
   }
 }
 
 export async function meApi(): Promise<UsuarioSessao | null> {
   const resposta = await fetch(`${API_BASE}/usuario/me`, {
     credentials: 'include',
+    headers: headersAuth(),
   })
+  if (resposta.status === 401) salvarToken(null)
   if (resposta.status === 401) return null
   if (resposta.status === 429) {
     const corpo = (await resposta.json().catch(() => null)) as { message?: string; retryAfter?: number } | null
@@ -136,7 +173,9 @@ export async function logoutApi(): Promise<void> {
   await fetch(`${API_BASE}/usuario/logout`, {
     method: 'POST',
     credentials: 'include',
+    headers: headersAuth(),
   }).catch(() => null)
+  salvarToken(null)
 }
 
 export async function solicitarCodigoRecuperacao(email: string): Promise<void> {

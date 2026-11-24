@@ -2,7 +2,11 @@ const jwt = require('jsonwebtoken')
 const Usuario = require('../model/UserModel')
 
 const auth = async (req,res,next) => {
-    const token = req.cookies.token
+    const authorization = req.headers?.authorization || ''
+    const bearerToken = authorization.startsWith('Bearer ')
+        ? authorization.slice(7).trim()
+        : null
+    const token = req.cookies?.token || bearerToken
     if(!token){
         console.log('token não fornecido')
         return res.status(401).json({

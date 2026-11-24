@@ -18,7 +18,8 @@ const login = async (req,res) => {
         const token = assinarToken(user)
         definirCookieToken(res, token)
         return res.status(200).json({
-            message: 'login realizado com sucesso!'
+            message: 'login realizado com sucesso!',
+            token
         })
     } catch (error) {
         console.error(error)
@@ -87,9 +88,11 @@ const alterarSenha = async (req, res) => {
             senha: nova_senha,
             token_version: user.token_version + 1
         })
-        definirCookieToken(res, assinarToken(user))
+        const novoToken = assinarToken(user)
+        definirCookieToken(res, novoToken)
         return res.status(200).json({
-            message: 'Senha alterada com sucesso.'
+            message: 'Senha alterada com sucesso.',
+            token: novoToken
         })
     } catch (error) {
         console.error(error)

@@ -145,13 +145,6 @@ export default function Login() {
             <Link to="/recuperar-senha" className="login-links__link">
               Esqueci a senha?
             </Link>
-            <span className="login-links__divisor" aria-hidden="true">
-              <i />
-              <i />
-            </span>
-            <Link to="/agendar" className="login-links__link login-links__link--forte">
-              Criar conta <span aria-hidden="true">→</span>
-            </Link>
           </div>
 
           <button type="submit" className="login-botao" disabled={enviando}>
